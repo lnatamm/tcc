@@ -1,0 +1,9 @@
+
+fastapi
+pydantic
+typing-extensions
+uvicorn
+psycopg2-binary
+python-dotenv
+dotenv
+supabase
