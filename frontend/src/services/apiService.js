@@ -98,3 +98,59 @@ export const matriculaService = {
     return response.data;
   },
 };
+
+// Treinadores
+export const treinadorService = {
+  getAll: async () => {
+    const response = await api.get('/treinadores/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/treinadores/${id}`);
+    return response.data;
+  },
+
+  create: async (treinadorData) => {
+    const response = await api.post('/treinadores/', treinadorData);
+    return response.data;
+  },
+
+  update: async (id, treinadorData) => {
+    const response = await api.put(`/treinadores/${id}`, treinadorData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/treinadores/${id}`);
+    return response.data;
+  },
+};
+
+// Esportes
+export const esporteService = {
+  getAll: async () => {
+    const response = await api.get('/esportes/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/esportes/${id}`);
+    return response.data;
+  },
+
+  create: async (esporteData) => {
+    const response = await api.post('/esportes/', esporteData);
+    return response.data;
+  },
+
+  update: async (id, esporteData) => {
+    const response = await api.put(`/esportes/${id}`, esporteData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/esportes/${id}`);
+    return response.data;
+  },
+};

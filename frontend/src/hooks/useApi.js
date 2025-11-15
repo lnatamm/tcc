@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { turmaService, atletaService, matriculaService } from '../services/apiService';
+import { 
+  turmaService, 
+  atletaService, 
+  matriculaService,
+  treinadorService,
+  esporteService
+} from '../services/apiService';
 
 // ============= TURMAS =============
 
@@ -184,6 +190,108 @@ export const useDeleteMatricula = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matriculas'] });
       queryClient.invalidateQueries({ queryKey: ['turmas-com-atletas'] });
+    },
+  });
+};
+
+// ============= TREINADORES =============
+
+export const useTreinadores = () => {
+  return useQuery({
+    queryKey: ['treinadores'],
+    queryFn: treinadorService.getAll,
+  });
+};
+
+export const useTreinador = (id) => {
+  return useQuery({
+    queryKey: ['treinador', id],
+    queryFn: () => treinadorService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateTreinador = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: treinadorService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
+    },
+  });
+};
+
+export const useUpdateTreinador = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => treinadorService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
+      queryClient.invalidateQueries({ queryKey: ['treinador', variables.id] });
+    },
+  });
+};
+
+export const useDeleteTreinador = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: treinadorService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
+    },
+  });
+};
+
+// ============= ESPORTES =============
+
+export const useEsportes = () => {
+  return useQuery({
+    queryKey: ['esportes'],
+    queryFn: esporteService.getAll,
+  });
+};
+
+export const useEsporte = (id) => {
+  return useQuery({
+    queryKey: ['esporte', id],
+    queryFn: () => esporteService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateEsporte = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: esporteService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['esportes'] });
+    },
+  });
+};
+
+export const useUpdateEsporte = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => esporteService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['esportes'] });
+      queryClient.invalidateQueries({ queryKey: ['esporte', variables.id] });
+    },
+  });
+};
+
+export const useDeleteEsporte = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: esporteService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['esportes'] });
     },
   });
 };

@@ -4,9 +4,11 @@ import { useTurmasComAtletas } from '../hooks/useApi';
 import HomeIcon from '@mui/icons-material/Home';
 import ChatIcon from '@mui/icons-material/Chat';
 import PersonIcon from '@mui/icons-material/Person';
+import AdicionarTurmaModal from '../components/AdicionarTurmaModal';
 
 const Home = () => {
   const [expandedTurma, setExpandedTurma] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const { data: turmas = [], isLoading: loading, error } = useTurmasComAtletas();
   
   const userName = "Derek";
@@ -78,8 +80,18 @@ const Home = () => {
           </div>
         ))}
 
-        <button className="adicionar-turma-btn">Adicionar turma</button>
+        <button 
+          className="adicionar-turma-btn"
+          onClick={() => setModalOpen(true)}
+        >
+          Adicionar turma
+        </button>
       </div>
+
+      <AdicionarTurmaModal 
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
 
       <div className="bottom-nav">
         <button className="nav-btn">
