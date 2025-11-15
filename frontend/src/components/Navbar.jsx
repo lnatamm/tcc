@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import HomeIcon from '@mui/icons-material/Home';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -14,6 +15,7 @@ const Navbar = () => {
             to="/" 
             className={`navbar-link ${location.pathname === '/' ? 'active' : ''}`}
           >
+            <HomeIcon sx={{ fontSize: 20, marginRight: 0.5 }} />
             Home
           </Link>
           {/* Adicione mais links aqui conforme necessário */}
