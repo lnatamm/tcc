@@ -2,7 +2,12 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
-from routes.example_routes import api_example
+from routes.atleta_routes import api_atletas
+from routes.turma_routes import api_turmas
+from routes.treinador_routes import api_treinadores
+from routes.esporte_routes import api_esportes
+from routes.exercicio_routes import api_exercicios
+from routes.matricula_routes import api_matriculas
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
@@ -22,7 +27,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-api.include_router(api_example)
+# Include routers
+api.include_router(api_atletas)
+api.include_router(api_turmas)
+api.include_router(api_treinadores)
+api.include_router(api_esportes)
+api.include_router(api_exercicios)
+api.include_router(api_matriculas)
 
 app.include_router(api)
 

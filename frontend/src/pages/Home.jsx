@@ -1,27 +1,15 @@
 import React, { useState } from 'react';
 import './Home.css';
+import { useTurmasComAtletas } from '../hooks/useApi';
+import HomeIcon from '@mui/icons-material/Home';
+import ChatIcon from '@mui/icons-material/Chat';
+import PersonIcon from '@mui/icons-material/Person';
 
 const Home = () => {
   const [expandedTurma, setExpandedTurma] = useState(null);
+  const { data: turmas = [], isLoading: loading, error } = useTurmasComAtletas();
   
   const userName = "Derek";
-  
-  const turmas = [
-    {
-      id: 1,
-      nome: "Nome da turma",
-      caras: [
-        { id: 1, nome: "Nome do cara" },
-        { id: 2, nome: "Nome do cara" },
-        { id: 3, nome: "Nome do cara" }
-      ]
-    },
-    {
-      id: 2,
-      nome: "Nome da turma",
-      caras: []
-    }
-  ];
 
   const toggleTurma = (turmaId) => {
     setExpandedTurma(expandedTurma === turmaId ? null : turmaId);
@@ -46,7 +34,21 @@ const Home = () => {
       <div className="turmas-section">
         <h3 className="section-title">TURMAS</h3>
         
-        {turmas.map((turma) => (
+        {loading && (
+          <div className="loading-message">Carregando turmas...</div>
+        )}
+        
+        {error && (
+          <div className="error-message">
+            {error?.message || 'Não foi possível carregar as turmas. Tente novamente mais tarde.'}
+          </div>
+        )}
+        
+        {!loading && !error && turmas.length === 0 && (
+          <div className="empty-message">Nenhuma turma encontrada</div>
+        )}
+        
+        {!loading && !error && turmas.map((turma) => (
           <div key={turma.id} className="turma-card">
             <div 
               className="turma-header"
@@ -60,13 +62,17 @@ const Home = () => {
             
             {expandedTurma === turma.id && (
               <div className="turma-content">
-                {turma.caras.map((cara) => (
-                  <div key={cara.id} className="cara-item">
-                    <div className="cara-avatar"></div>
-                    <span className="cara-nome">{cara.nome}</span>
-                    <button className="visualizar-btn">visualizar</button>
-                  </div>
-                ))}
+                {turma.atletas && turma.atletas.length > 0 ? (
+                  turma.atletas.map((atleta) => (
+                    <div key={atleta.id} className="cara-item">
+                      <div className="cara-avatar"></div>
+                      <span className="cara-nome">{atleta.nome}</span>
+                      <button className="visualizar-btn">visualizar</button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-atletas">Nenhum atleta matriculado</div>
+                )}
               </div>
             )}
           </div>
@@ -77,13 +83,13 @@ const Home = () => {
 
       <div className="bottom-nav">
         <button className="nav-btn">
-          <span className="nav-icon">🏠</span>
+          <HomeIcon sx={{ fontSize: 28 }} />
         </button>
         <button className="nav-btn">
-          <span className="nav-icon">💬</span>
+          <ChatIcon sx={{ fontSize: 28 }} />
         </button>
         <button className="nav-btn">
-          <span className="nav-icon">👤</span>
+          <PersonIcon sx={{ fontSize: 28 }} />
         </button>
       </div>
     </div>
