@@ -1,17 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Home.css';
 import { useTurmasComAtletas } from '../hooks/useApi';
 import HomeIcon from '@mui/icons-material/Home';
 import ChatIcon from '@mui/icons-material/Chat';
 import PersonIcon from '@mui/icons-material/Person';
 import AdicionarTurmaModal from '../components/AdicionarTurmaModal';
+import { Avatar } from '@mui/material';
+import api from '../api';
 
 const Home = () => {
   const [expandedTurma, setExpandedTurma] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [atletaFotos, setAtletaFotos] = useState({});
   const { data: turmas = [], isLoading: loading, error } = useTurmasComAtletas();
   
   const userName = "Derek";
+
+  // Carregar fotos dos atletas como blob URLs
+  useEffect(() => {
+    const loadAtletaFotos = async () => {
+      const fotos = {};
+      for (const turma of turmas) {
+        if (turma.atletas) {
+          for (const atleta of turma.atletas) {
+            try {
+              const response = await api.get(`/atletas/${atleta.id}/foto`, {
+                responseType: 'blob'
+              });
+              const imageUrl = URL.createObjectURL(response.data);
+              fotos[atleta.id] = imageUrl;
+            } catch (err) {
+              console.error(`Erro ao carregar foto do atleta ${atleta.id}:`, err);
+            }
+          }
+        }
+      }
+      setAtletaFotos(fotos);
+    };
+
+    if (turmas.length > 0) {
+      loadAtletaFotos();
+    }
+
+    // Cleanup: revogar URLs de blob quando o componente desmontar
+    return () => {
+      Object.values(atletaFotos).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [turmas]);
 
   const toggleTurma = (turmaId) => {
     setExpandedTurma(expandedTurma === turmaId ? null : turmaId);
@@ -67,7 +104,13 @@ const Home = () => {
                 {turma.atletas && turma.atletas.length > 0 ? (
                   turma.atletas.map((atleta) => (
                     <div key={atleta.id} className="cara-item">
-                      <div className="cara-avatar"></div>
+                      <Avatar
+                        src={atletaFotos[atleta.id]}
+                        alt={atleta.nome}
+                        sx={{ width: 40, height: 40 }}
+                      >
+                        {atleta.nome.charAt(0).toUpperCase()}
+                      </Avatar>
                       <span className="cara-nome">{atleta.nome}</span>
                       <button className="visualizar-btn">visualizar</button>
                     </div>

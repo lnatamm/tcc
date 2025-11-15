@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from models.atleta_models import AtletaModel, AtletaCreateModel, AtletaUpdateModel
 from controllers.atleta_controller import AtletaController
 
@@ -23,6 +24,20 @@ def get_atleta(atleta_id: int):
         if not result.data:
             raise HTTPException(status_code=404, detail="Atleta não encontrado")
         return result.data[0] if result.data else None
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@api_atletas.get("/{atleta_id}/foto")
+def get_foto_atleta(atleta_id: int):
+    """Retorna a foto de um atleta por ID"""
+    try:
+        controller = AtletaController()
+        file_bytes, content_type = controller.get_foto_atleta(atleta_id)
+        if not file_bytes:
+            raise HTTPException(status_code=404, detail="Foto não encontrada")
+        return Response(content=file_bytes, media_type=content_type)
     except HTTPException:
         raise
     except Exception as e:

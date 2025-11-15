@@ -7,3 +7,4 @@ psycopg2-binary
 python-dotenv
 dotenv
 supabase
+boto3

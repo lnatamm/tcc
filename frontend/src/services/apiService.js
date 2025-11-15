@@ -50,6 +50,11 @@ export const atletaService = {
     return response.data;
   },
 
+  getFoto: async (id) => {
+    const response = await api.get(`/atletas/${id}/foto`);
+    return response.data;
+  },
+
   getTurmas: async (atletaId) => {
     const response = await api.get(`/atletas/${atletaId}/turmas`);
     return response.data;

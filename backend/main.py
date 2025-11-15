@@ -2,6 +2,11 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente
+load_dotenv()
+
 from routes.atleta_routes import api_atletas
 from routes.turma_routes import api_turmas
 from routes.treinador_routes import api_treinadores

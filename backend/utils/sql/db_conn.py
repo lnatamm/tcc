@@ -6,10 +6,14 @@ class DbConnSupabase:
     def __init__(self):
         # Load environment variables from .env (if present)
         load_dotenv()
-        self.client = create_client(
-            os.getenv('SUPABASE_URL'),
-            os.getenv('SUPABASE_KEY')
-        )
+        try:
+            self.client = create_client(
+                os.getenv('SUPABASE_URL'),
+                os.getenv('SUPABASE_KEY')
+            )
+        except Exception as e:
+            print("Error creating Supabase client:", e)
+            raise e
         
     def get_client(self):
         return self.client
