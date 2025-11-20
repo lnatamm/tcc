@@ -1,297 +1,297 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  turmaService, 
-  atletaService, 
-  matriculaService,
-  treinadorService,
-  esporteService
+  teamService, 
+  athleteService, 
+  enrollmentService,
+  coachService,
+  sportService
 } from '../services/apiService';
 
-// ============= TURMAS =============
+// ============= TEAMS ============
 
-export const useTurmas = () => {
+export const useTeams = () => {
   return useQuery({
-    queryKey: ['turmas'],
-    queryFn: turmaService.getAll,
+    queryKey: ['teams'],
+    queryFn: teamService.getAll,
   });
 };
 
-export const useTurma = (id) => {
+export const useTeam = (id) => {
   return useQuery({
-    queryKey: ['turma', id],
-    queryFn: () => turmaService.getById(id),
+    queryKey: ['team', id],
+    queryFn: () => teamService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useTurmasByTreinador = (treinadorId) => {
+export const useTeamsByCoach = (coachId) => {
   return useQuery({
-    queryKey: ['turmas', 'treinador', treinadorId],
-    queryFn: () => turmaService.getByTreinador(treinadorId),
-    enabled: !!treinadorId,
+    queryKey: ['teams', 'coach', coachId],
+    queryFn: () => teamService.getByCoach(coachId),
+    enabled: !!coachId,
   });
 };
 
-export const useTurmasComAtletas = () => {
-  const { data: turmas, ...queryInfo } = useTurmas();
+export const useTeamsWithAthletes = () => {
+  const { data: teams, ...queryInfo } = useTeams();
   
   return useQuery({
-    queryKey: ['turmas-com-atletas'],
+    queryKey: ['teams-with-athletes'],
     queryFn: async () => {
-      if (!turmas) return [];
+      if (!teams) return [];
       
-      const turmasComAtletas = await Promise.all(
-        turmas.map(async (turma) => {
+      const teamsWithAthletes = await Promise.all(
+        teams.map(async (team) => {
           try {
-            const matriculas = await matriculaService.getByTurma(turma.id);
-            const atletas = matriculas.map(m => m.atleta).filter(Boolean);
-            return { ...turma, atletas };
+            const enrollments = await enrollmentService.getByTeam(team.id);
+            const athletes = enrollments.map(m => m.athlete).filter(Boolean);
+            return { ...team, athletes };
           } catch (err) {
-            console.error(`Erro ao carregar atletas da turma ${turma.id}:`, err);
-            return { ...turma, atletas: [] };
+            console.error(`Error to load athletes of team ${team.id}:`, err);
+            return { ...team, athletes: [] };
           }
         })
       );
       
-      return turmasComAtletas;
+      return teamsWithAthletes;
     },
-    enabled: !!turmas,
+    enabled: !!teams,
     ...queryInfo,
   });
 };
 
-export const useCreateTurma = () => {
+export const useCreateTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: turmaService.create,
+    mutationFn: teamService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 };
 
-export const useUpdateTurma = () => {
+export const useUpdateTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => turmaService.update(id, data),
+    mutationFn: ({ id, data }) => teamService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
-      queryClient.invalidateQueries({ queryKey: ['turma', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['team', variables.id] });
     },
   });
 };
 
-export const useDeleteTurma = () => {
+export const useDeleteTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: turmaService.delete,
+    mutationFn: teamService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 };
 
-// ============= ATLETAS =============
+// ============= ATHLETES =============
 
-export const useAtletas = () => {
+export const useAthletes = () => {
   return useQuery({
-    queryKey: ['atletas'],
-    queryFn: atletaService.getAll,
+    queryKey: ['athletes'],
+    queryFn: athleteService.getAll,
   });
 };
 
-export const useAtleta = (id) => {
+export const useAthlete = (id) => {
   return useQuery({
-    queryKey: ['atleta', id],
-    queryFn: () => atletaService.getById(id),
+    queryKey: ['athlete', id],
+    queryFn: () => athleteService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useCreateAtleta = () => {
+export const useCreateAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: atletaService.create,
+    mutationFn: athleteService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
   });
 };
 
-export const useUpdateAtleta = () => {
+export const useUpdateAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => atletaService.update(id, data),
+    mutationFn: ({ id, data }) => athleteService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
-      queryClient.invalidateQueries({ queryKey: ['atleta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
+      queryClient.invalidateQueries({ queryKey: ['athlete', variables.id] });
     },
   });
 };
 
-export const useDeleteAtleta = () => {
+export const useDeleteAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: atletaService.delete,
+    mutationFn: athleteService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
   });
 };
 
-// ============= MATRÍCULAS =============
+// ============= ENROLLMENTS =============
 
-export const useMatriculas = () => {
+export const useEnrollments = () => {
   return useQuery({
-    queryKey: ['matriculas'],
-    queryFn: matriculaService.getAll,
+    queryKey: ['enrollments'],
+    queryFn: enrollmentService.getAll,
   });
 };
 
-export const useMatriculasByTurma = (turmaId) => {
+export const useEnrollmentsByTeam = (teamId) => {
   return useQuery({
-    queryKey: ['matriculas', 'turma', turmaId],
-    queryFn: () => matriculaService.getByTurma(turmaId),
-    enabled: !!turmaId,
+    queryKey: ['enrollments', 'team', teamId],
+    queryFn: () => enrollmentService.getByTeam(teamId),
+    enabled: !!teamId,
   });
 };
 
-export const useMatriculasByAtleta = (atletaId) => {
+export const useEnrollmentsByAthlete = (athleteId) => {
   return useQuery({
-    queryKey: ['matriculas', 'atleta', atletaId],
-    queryFn: () => matriculaService.getByAtleta(atletaId),
-    enabled: !!atletaId,
+    queryKey: ['enrollments', 'athlete', athleteId],
+    queryFn: () => enrollmentService.getByAthlete(athleteId),
+    enabled: !!athleteId,
   });
 };
 
-export const useCreateMatricula = () => {
+export const useCreateEnrollment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: matriculaService.create,
+    mutationFn: enrollmentService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
-      queryClient.invalidateQueries({ queryKey: ['turmas-com-atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['teams-with-athletes'] });
     },
   });
 };
 
-export const useDeleteMatricula = () => {
+export const useDeleteEnrollment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: matriculaService.delete,
+    mutationFn: enrollmentService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
-      queryClient.invalidateQueries({ queryKey: ['turmas-com-atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['teams-with-athletes'] });
     },
   });
 };
 
-// ============= TREINADORES =============
+// ============= COACHES =============
 
-export const useTreinadores = () => {
+export const useCoaches = () => {
   return useQuery({
-    queryKey: ['treinadores'],
-    queryFn: treinadorService.getAll,
+    queryKey: ['coaches'],
+    queryFn: coachService.getAll,
   });
 };
 
-export const useTreinador = (id) => {
+export const useCoach = (id) => {
   return useQuery({
-    queryKey: ['treinador', id],
-    queryFn: () => treinadorService.getById(id),
+    queryKey: ['coach', id],
+    queryFn: () => coachService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useCreateTreinador = () => {
+export const useCreateCoach = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: treinadorService.create,
+    mutationFn: coachService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
   });
 };
 
-export const useUpdateTreinador = () => {
+export const useUpdateCoach = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => treinadorService.update(id, data),
+    mutationFn: ({ id, data }) => coachService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
-      queryClient.invalidateQueries({ queryKey: ['treinador', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
+      queryClient.invalidateQueries({ queryKey: ['coach', variables.id] });
     },
   });
 };
 
-export const useDeleteTreinador = () => {
+export const useDeleteCoach = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: treinadorService.delete,
+    mutationFn: coachService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['treinadores'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
     },
   });
 };
 
-// ============= ESPORTES =============
+// ============= SPORTS =============
 
-export const useEsportes = () => {
+export const useSports = () => {
   return useQuery({
-    queryKey: ['esportes'],
-    queryFn: esporteService.getAll,
+    queryKey: ['sports'],
+    queryFn: sportService.getAll,
   });
 };
 
-export const useEsporte = (id) => {
+export const useSport = (id) => {
   return useQuery({
-    queryKey: ['esporte', id],
-    queryFn: () => esporteService.getById(id),
+    queryKey: ['sport', id],
+    queryFn: () => sportService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useCreateEsporte = () => {
+export const useCreateSport = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: esporteService.create,
+    mutationFn: sportService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['esportes'] });
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
     },
   });
 };
 
-export const useUpdateEsporte = () => {
+export const useUpdateSport = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => esporteService.update(id, data),
+    mutationFn: ({ id, data }) => sportService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['esportes'] });
-      queryClient.invalidateQueries({ queryKey: ['esporte', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
+      queryClient.invalidateQueries({ queryKey: ['sport', variables.id] });
     },
   });
 };
 
-export const useDeleteEsporte = () => {
+export const useDeleteSport = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: esporteService.delete,
+    mutationFn: sportService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['esportes'] });
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
     },
   });
 };

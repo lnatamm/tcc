@@ -10,12 +10,12 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { useCreateTurma } from '../hooks/useApi';
-import TreinadorSelector from './TreinadorSelector';
-import EsporteSelector from './EsporteSelector';
+import { useCreateTeam } from '../hooks/useApi';
+import CoachSelector from './CoachSelector';
+import SportSelector from './SportSelector';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-const AdicionarTurmaModal = ({ open, onClose }) => {
+const AddTeamModal = ({ open, onClose }) => {
   const [formData, setFormData] = useState({
     nome: '',
     id_treinador: '',
@@ -24,7 +24,7 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
   });
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const createTurma = useCreateTurma();
+  const createTeam = useCreateTeam();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,14 +34,14 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
     }));
   };
 
-  const handleTreinadorChange = (value) => {
+  const handleCoachChange = (value) => {
     setFormData(prev => ({
       ...prev,
       id_treinador: value
     }));
   };
 
-  const handleEsporteChange = (value) => {
+  const handleSportChange = (value) => {
     setFormData(prev => ({
       ...prev,
       id_esporte: value
@@ -64,7 +64,7 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    createTurma.mutate({
+    createTeam.mutate({
       nome: formData.nome,
       id_treinador: parseInt(formData.id_treinador),
       id_esporte: parseInt(formData.id_esporte),
@@ -85,7 +85,7 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
   };
 
   const handleClose = () => {
-    if (!createTurma.isPending) {
+    if (!createTeam.isPending) {
       setFormData({
         nome: '',
         id_treinador: '',
@@ -93,7 +93,7 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
         foto_path: '',
       });
       setSelectedFile(null);
-      createTurma.reset();
+      createTeam.reset();
       onClose();
     }
   };
@@ -105,37 +105,37 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Adicionar Nova Turma</DialogTitle>
+      <DialogTitle>Add New Team</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-            {createTurma.isError && (
+            {createTeam.isError && (
               <Alert severity="error">
-                Erro ao criar turma: {createTurma.error?.message || 'Tente novamente'}
+                Error creating team: {createTeam.error?.message || 'Please try again'}
               </Alert>
             )}
 
             <TextField
-              label="Nome da Turma"
+              label="Team Name"
               name="nome"
               value={formData.nome}
               onChange={handleChange}
               required
               fullWidth
-              disabled={createTurma.isPending}
+              disabled={createTeam.isPending}
               autoFocus
             />
 
-            <TreinadorSelector
+            <CoachSelector
               value={formData.id_treinador}
-              onChange={handleTreinadorChange}
-              disabled={createTurma.isPending}
+              onChange={handleCoachChange}
+              disabled={createTeam.isPending}
             />
 
-            <EsporteSelector
+            <SportSelector
               value={formData.id_esporte}
-              onChange={handleEsporteChange}
-              disabled={createTurma.isPending}
+              onChange={handleSportChange}
+              disabled={createTeam.isPending}
             />
 
             <Box>
@@ -143,11 +143,11 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
                 component="label"
                 variant="outlined"
                 startIcon={<CloudUploadIcon />}
-                disabled={createTurma.isPending}
+                disabled={createTeam.isPending}
                 fullWidth
                 sx={{ py: 1.5 }}
               >
-                {selectedFile ? selectedFile.name : 'Selecionar Foto da Turma (PNG)'}
+                {selectedFile ? selectedFile.name : 'Select Team Photo (PNG)'}
                 <input
                   type="file"
                   hidden
@@ -175,17 +175,17 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
         <DialogActions>
           <Button 
             onClick={handleClose}
-            disabled={createTurma.isPending}
+            disabled={createTeam.isPending}
           >
-            Cancelar
+            Cancel
           </Button>
           <Button 
             type="submit"
             variant="contained"
-            disabled={createTurma.isPending}
-            startIcon={createTurma.isPending && <CircularProgress size={20} />}
+            disabled={createTeam.isPending}
+            startIcon={createTeam.isPending && <CircularProgress size={20} />}
           >
-            {createTurma.isPending ? 'Criando...' : 'Adicionar'}
+            {createTeam.isPending ? 'Creating...' : 'Add'}
           </Button>
         </DialogActions>
       </form>
@@ -193,4 +193,4 @@ const AdicionarTurmaModal = ({ open, onClose }) => {
   );
 };
 
-export default AdicionarTurmaModal;
+export default AddTeamModal;

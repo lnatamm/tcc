@@ -2,26 +2,27 @@ import uvicorn
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
+import os
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
 load_dotenv()
 
-from routes.atleta_routes import api_atletas
-from routes.turma_routes import api_turmas
-from routes.treinador_routes import api_treinadores
-from routes.esporte_routes import api_esportes
-from routes.exercicio_routes import api_exercicios
-from routes.matricula_routes import api_matriculas
+from routes.athlete_routes import api_athletes
+from routes.team_routes import api_teams
+from routes.coach_routes import api_coaches
+from routes.sport_routes import api_sports
+from routes.exercise_routes import api_exercises
+from routes.enrollment_routes import api_enrollments
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
 
-# Atention: Adjust the origins list to match your frontend's URL
+# Attention: Adjust the origins list to match your frontend's URL
 # For example, if your frontend is running on localhost:5173, you can set it
 origins: List[str] = [
     "http://localhost:8080",
-    "http://localhost:5173",
+    VITE_CLIENT_URL if (VITE_CLIENT_URL := os.getenv("VITE_CLIENT_URL")) else "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -33,12 +34,12 @@ app.add_middleware(
 )
 
 # Include routers
-api.include_router(api_atletas)
-api.include_router(api_turmas)
-api.include_router(api_treinadores)
-api.include_router(api_esportes)
-api.include_router(api_exercicios)
-api.include_router(api_matriculas)
+api.include_router(api_athletes)
+api.include_router(api_teams)
+api.include_router(api_coaches)
+api.include_router(api_sports)
+api.include_router(api_exercises)
+api.include_router(api_enrollments)
 
 app.include_router(api)
 

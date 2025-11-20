@@ -1,161 +1,229 @@
 import api from '../api';
 
-// Turmas
-export const turmaService = {
+// Teams
+export const teamService = {
   getAll: async () => {
-    const response = await api.get('/turmas/');
+    const response = await api.get('/teams/');
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await api.get(`/turmas/${id}`);
+    const response = await api.get(`/teams/${id}`);
     return response.data;
   },
 
-  getByTreinador: async (treinadorId) => {
-    const response = await api.get(`/turmas/treinador/${treinadorId}`);
+  getByCoach: async (coachId) => {
+    const response = await api.get(`/teams/coach/${coachId}`);
     return response.data;
   },
 
-  getAtletas: async (turmaId) => {
-    const response = await api.get(`/turmas/${turmaId}/atletas`);
+  getPhoto: async (id) => {
+    const response = await api.get(`/teams/${id}/photo`);
     return response.data;
   },
 
-  create: async (turmaData) => {
-    const response = await api.post('/turmas/', turmaData);
+  getAthletes: async (teamId) => {
+    const response = await api.get(`/teams/${teamId}/athletes`);
     return response.data;
   },
 
-  update: async (id, turmaData) => {
-    const response = await api.put(`/turmas/${id}`, turmaData);
+  create: async (teamData) => {
+    const response = await api.post('/teams/', teamData);
+    return response.data;
+  },
+
+  update: async (id, teamData) => {
+    const response = await api.put(`/teams/${id}`, teamData);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/turmas/${id}`);
+    const response = await api.delete(`/teams/${id}`);
     return response.data;
   },
 };
 
-// Atletas
-export const atletaService = {
+// Athletes
+export const athleteService = {
   getAll: async () => {
-    const response = await api.get('/atletas/');
+    const response = await api.get('/athletes/');
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await api.get(`/atletas/${id}`);
+    const response = await api.get(`/athletes/${id}`);
     return response.data;
   },
 
-  getFoto: async (id) => {
-    const response = await api.get(`/atletas/${id}/foto`);
+  getPhoto: async (id) => {
+    const response = await api.get(`/athletes/${id}/photo`);
     return response.data;
   },
 
-  getTurmas: async (atletaId) => {
-    const response = await api.get(`/atletas/${atletaId}/turmas`);
+  getTeams: async (athleteId) => {
+    const response = await api.get(`/athletes/${athleteId}/teams`);
     return response.data;
   },
 
-  create: async (atletaData) => {
-    const response = await api.post('/atletas/', atletaData);
+  create: async (athleteData) => {
+    const response = await api.post('/athletes/', athleteData);
     return response.data;
   },
 
-  update: async (id, atletaData) => {
-    const response = await api.put(`/atletas/${id}`, atletaData);
-    return response.data;
-  },
-
-  delete: async (id) => {
-    const response = await api.delete(`/atletas/${id}`);
-    return response.data;
-  },
-};
-
-// Matrículas
-export const matriculaService = {
-  getAll: async () => {
-    const response = await api.get('/matriculas/');
-    return response.data;
-  },
-
-  getByTurma: async (turmaId) => {
-    const response = await api.get(`/matriculas/turma/${turmaId}`);
-    return response.data;
-  },
-
-  getByAtleta: async (atletaId) => {
-    const response = await api.get(`/matriculas/atleta/${atletaId}`);
-    return response.data;
-  },
-
-  create: async (matriculaData) => {
-    const response = await api.post('/matriculas/', matriculaData);
+  update: async (id, athleteData) => {
+    const response = await api.put(`/athletes/${id}`, athleteData);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/matriculas/${id}`);
+    const response = await api.delete(`/athletes/${id}`);
     return response.data;
   },
 };
 
-// Treinadores
-export const treinadorService = {
+// Enrollments
+export const enrollmentService = {
   getAll: async () => {
-    const response = await api.get('/treinadores/');
+    const response = await api.get('/enrollments/');
+    return response.data;
+  },
+
+  getByTeam: async (teamId) => {
+    const response = await api.get(`/enrollments/team/${teamId}`);
+    return response.data;
+  },
+
+  getByAthlete: async (athleteId) => {
+    const response = await api.get(`/enrollments/athlete/${athleteId}`);
+    return response.data;
+  },
+
+  create: async (enrollmentData) => {
+    const response = await api.post('/enrollments/', enrollmentData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/enrollments/${id}`);
+    return response.data;
+  },
+};
+
+// Coaches
+export const coachService = {
+  getAll: async () => {
+    const response = await api.get('/coaches/');
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await api.get(`/treinadores/${id}`);
+    const response = await api.get(`/coaches/${id}`);
     return response.data;
   },
 
-  create: async (treinadorData) => {
-    const response = await api.post('/treinadores/', treinadorData);
+  getPhoto: async (id) => {
+    const response = await api.get(`/coaches/${id}/photo`);
     return response.data;
   },
 
-  update: async (id, treinadorData) => {
-    const response = await api.put(`/treinadores/${id}`, treinadorData);
+  getTeams: async (coachId) => {
+    const response = await api.get(`/coaches/${coachId}/teams`);
+    return response.data;
+  },
+
+  create: async (coachData) => {
+    const response = await api.post('/coaches/', coachData);
+    return response.data;
+  },
+
+  update: async (id, coachData) => {
+    const response = await api.put(`/coaches/${id}`, coachData);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/treinadores/${id}`);
+    const response = await api.delete(`/coaches/${id}`);
     return response.data;
   },
 };
 
-// Esportes
-export const esporteService = {
+// Sports
+export const sportService = {
   getAll: async () => {
-    const response = await api.get('/esportes/');
+    const response = await api.get('/sports/');
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await api.get(`/esportes/${id}`);
+    const response = await api.get(`/sports/${id}`);
     return response.data;
   },
 
-  create: async (esporteData) => {
-    const response = await api.post('/esportes/', esporteData);
+  getPhoto: async (id) => {
+    const response = await api.get(`/sports/${id}/photo`);
     return response.data;
   },
 
-  update: async (id, esporteData) => {
-    const response = await api.put(`/esportes/${id}`, esporteData);
+  create: async (sportData) => {
+    const response = await api.post('/sports/', sportData);
+    return response.data;
+  },
+
+  update: async (id, sportData) => {
+    const response = await api.put(`/sports/${id}`, sportData);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await api.delete(`/esportes/${id}`);
+    const response = await api.delete(`/sports/${id}`);
+    return response.data;
+  },
+};
+
+// Exercises
+export const exerciseService = {
+  getAll: async () => {
+    const response = await api.get('/exercises/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/exercises/${id}`);
+    return response.data;
+  },
+
+  getByTeam: async (teamId) => {
+    const response = await api.get(`/exercises/team/${teamId}`);
+    return response.data;
+  },
+
+  getByAthlete: async (athleteId) => {
+    const response = await api.get(`/exercises/athlete/${athleteId}`);
+    return response.data;
+  },
+
+  getPhoto: async (id) => {
+    const response = await api.get(`/exercises/${id}/photo`);
+    return response.data;
+  },
+
+  getVideo: async (id) => {
+    const response = await api.get(`/exercises/${id}/video`);
+    return response.data;
+  },
+
+  create: async (exerciseData) => {
+    const response = await api.post('/exercises/', exerciseData);
+    return response.data;
+  },
+
+  update: async (id, exerciseData) => {
+    const response = await api.put(`/exercises/${id}`, exerciseData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/exercises/${id}`);
     return response.data;
   },
 };

@@ -12,11 +12,15 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { useEsportes } from '../hooks/useApi';
+import { useSports } from '../hooks/useApi';
 import SportsIcon from '@mui/icons-material/Sports';
 
-const EsporteSelector = ({ value, onChange, disabled }) => {
-  const { data: esportes = [], isLoading, error } = useEsportes();
+const SportSelector = ({ value, onChange, disabled }) => {
+  const { data: sports = [], isLoading, error } = useSports();
+
+  const getSportPhotoUrl = (sportId) => {
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/sports/${sportId}/photo`;
+  };
 
   if (isLoading) {
     return (
@@ -29,15 +33,15 @@ const EsporteSelector = ({ value, onChange, disabled }) => {
   if (error) {
     return (
       <Alert severity="error">
-        Erro ao carregar esportes: {error.message}
+        Error loading sports: {error.message}
       </Alert>
     );
   }
 
-  if (esportes.length === 0) {
+  if (sports.length === 0) {
     return (
       <Alert severity="info">
-        Nenhum esporte cadastrado
+        No sports registered
       </Alert>
     );
   }
@@ -45,43 +49,43 @@ const EsporteSelector = ({ value, onChange, disabled }) => {
   return (
     <FormControl component="fieldset" fullWidth disabled={disabled}>
       <FormLabel component="legend" sx={{ mb: 1 }}>
-        Selecione o Esporte *
+        Select Sport *
       </FormLabel>
       <RadioGroup
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {esportes.map((esporte) => (
+          {sports.map((sport) => (
             <Paper
-              key={esporte.id}
-              elevation={value == esporte.id ? 3 : 1}
+              key={sport.id}
+              elevation={value == sport.id ? 3 : 1}
               sx={{
                 p: 1.5,
                 cursor: 'pointer',
-                border: value == esporte.id ? '2px solid #1976d2' : '2px solid transparent',
+                border: value == sport.id ? '2px solid #1976d2' : '2px solid transparent',
                 transition: 'all 0.2s',
                 '&:hover': {
                   elevation: 2,
-                  borderColor: value == esporte.id ? '#1976d2' : '#e0e0e0',
+                  borderColor: value == sport.id ? '#1976d2' : '#e0e0e0',
                 },
               }}
-              onClick={() => !disabled && onChange(esporte.id.toString())}
+              onClick={() => !disabled && onChange(sport.id.toString())}
             >
               <FormControlLabel
-                value={esporte.id.toString()}
+                value={sport.id.toString()}
                 control={<Radio />}
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 1 }}>
                     <Avatar
-                      src={esporte.foto_path}
-                      alt={esporte.nome}
+                      src={sport.photo_path ? getSportPhotoUrl(sport.id) : undefined}
+                      alt={sport.name || 'Sport'}
                       sx={{ width: 48, height: 48, bgcolor: '#1976d2' }}
                     >
                       <SportsIcon />
                     </Avatar>
                     <Typography variant="body1" fontWeight="medium">
-                      {esporte.nome}
+                      {sport.name}
                     </Typography>
                   </Box>
                 }
@@ -95,4 +99,4 @@ const EsporteSelector = ({ value, onChange, disabled }) => {
   );
 };
 
-export default EsporteSelector;
+export default SportSelector;

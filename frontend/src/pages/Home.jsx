@@ -1,57 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import './Home.css';
-import { useTurmasComAtletas } from '../hooks/useApi';
-import HomeIcon from '@mui/icons-material/Home';
-import ChatIcon from '@mui/icons-material/Chat';
-import PersonIcon from '@mui/icons-material/Person';
-import AdicionarTurmaModal from '../components/AdicionarTurmaModal';
+import {useTeamsWithAthletes } from '../hooks/useApi';
+import AddTeamModal from '../components/AddTeamModal';
 import { Avatar } from '@mui/material';
 import api from '../api';
 
 const Home = () => {
-  const [expandedTurma, setExpandedTurma] = useState(null);
+  const [expandedTeam, setExpandedTeam] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [atletaFotos, setAtletaFotos] = useState({});
-  const { data: turmas = [], isLoading: loading, error } = useTurmasComAtletas();
+  const [athletePhotos, setAthletePhotos] = useState({});
+  const { data: teams = [], isLoading: loading, error } = useTeamsWithAthletes();
   
   const userName = "Derek";
 
-  // Carregar fotos dos atletas como blob URLs
+  // Load athlete photos as blob URLs
   useEffect(() => {
-    const loadAtletaFotos = async () => {
-      const fotos = {};
-      for (const turma of turmas) {
-        if (turma.atletas) {
-          for (const atleta of turma.atletas) {
+    const loadAthletePhotos = async () => {
+      const photos = {};
+      for (const team of teams) {
+        if (team.athletes) {
+          for (const athlete of team.athletes) {
             try {
-              const response = await api.get(`/atletas/${atleta.id}/foto`, {
+              const response = await api.get(`/athletes/${athlete.id}/photo`, {
                 responseType: 'blob'
               });
               const imageUrl = URL.createObjectURL(response.data);
-              fotos[atleta.id] = imageUrl;
+              photos[athlete.id] = imageUrl;
             } catch (err) {
-              console.error(`Erro ao carregar foto do atleta ${atleta.id}:`, err);
+              console.error(`Error loading photo for athlete ${athlete.id}:`, err);
             }
           }
         }
       }
-      setAtletaFotos(fotos);
+      setAthletePhotos(photos);
     };
 
-    if (turmas.length > 0) {
-      loadAtletaFotos();
+    if (teams.length > 0) {
+      loadAthletePhotos();
     }
 
     // Cleanup: revogar URLs de blob quando o componente desmontar
     return () => {
-      Object.values(atletaFotos).forEach(url => {
+      Object.values(athletePhotos).forEach(url => {
         if (url) URL.revokeObjectURL(url);
       });
     };
-  }, [turmas]);
-
-  const toggleTurma = (turmaId) => {
-    setExpandedTurma(expandedTurma === turmaId ? null : turmaId);
+  }, [teams]);
+  const toggleTeam = (teamId) => {
+    setExpandedTeam(expandedTeam === teamId ? null : teamId);
   };
 
   return (
@@ -64,59 +60,59 @@ const Home = () => {
       </div>
 
       <div className="quick-actions">
-        <button className="action-card">Oto canto</button>
+        <button className="action-card">Routines</button>
         <button className="action-card">Oto canto</button>
         <button className="action-card">Oto canto</button>
         <button className="action-card">Oto canto</button>
       </div>
 
-      <div className="turmas-section">
-        <h3 className="section-title">TURMAS</h3>
+      <div className="teams-section">
+        <h3 className="section-title">TEAMS</h3>
         
         {loading && (
-          <div className="loading-message">Carregando turmas...</div>
+          <div className="loading-message">Loading teams...</div>
         )}
         
         {error && (
           <div className="error-message">
-            {error?.message || 'Não foi possível carregar as turmas. Tente novamente mais tarde.'}
+            {error?.message || 'Unable to load teams. Please try again later.'}
           </div>
         )}
         
-        {!loading && !error && turmas.length === 0 && (
-          <div className="empty-message">Nenhuma turma encontrada</div>
+        {!loading && !error && teams.length === 0 && (
+          <div className="empty-message">No teams found</div>
         )}
         
-        {!loading && !error && turmas.map((turma) => (
-          <div key={turma.id} className="turma-card">
+        {!loading && !error && teams.map((team) => (
+          <div key={team.id} className="team-card">
             <div 
-              className="turma-header"
-              onClick={() => toggleTurma(turma.id)}
+              className="team-header"
+              onClick={() => toggleTeam(team.id)}
             >
-              <span className="turma-nome">{turma.nome}</span>
-              <span className="turma-toggle">
-                {expandedTurma === turma.id ? '∧' : '∨'}
+              <span className="team-name">{team.name}</span>
+              <span className="team-toggle">
+                {expandedTeam === team.id ? '∧' : '∨'}
               </span>
             </div>
             
-            {expandedTurma === turma.id && (
-              <div className="turma-content">
-                {turma.atletas && turma.atletas.length > 0 ? (
-                  turma.atletas.map((atleta) => (
-                    <div key={atleta.id} className="cara-item">
+            {expandedTeam === team.id && (
+              <div className="team-content">
+                {team.athletes && team.athletes.length > 0 ? (
+                  team.athletes.map((athlete) => (
+                    <div key={athlete.id} className="athlete-item">
                       <Avatar
-                        src={atletaFotos[atleta.id]}
-                        alt={atleta.nome}
+                        src={athletePhotos[athlete.id]}
+                        alt={athlete.name}
                         sx={{ width: 40, height: 40 }}
                       >
-                        {atleta.nome.charAt(0).toUpperCase()}
+                        {athlete.name.charAt(0).toUpperCase()}
                       </Avatar>
-                      <span className="cara-nome">{atleta.nome}</span>
-                      <button className="visualizar-btn">visualizar</button>
+                      <span className="athlete-name">{athlete.name}</span>
+                      <button className="view-btn">view</button>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-atletas">Nenhum atleta matriculado</div>
+                  <div className="empty-athletes">No athletes enrolled</div>
                 )}
               </div>
             )}
@@ -124,29 +120,19 @@ const Home = () => {
         ))}
 
         <button 
-          className="adicionar-turma-btn"
+          className="add-team-btn"
           onClick={() => setModalOpen(true)}
         >
-          Adicionar turma
+          Add Team
         </button>
       </div>
 
-      <AdicionarTurmaModal 
+      <AddTeamModal 
         open={modalOpen}
         onClose={() => setModalOpen(false)}
       />
 
-      <div className="bottom-nav">
-        <button className="nav-btn">
-          <HomeIcon sx={{ fontSize: 28 }} />
-        </button>
-        <button className="nav-btn">
-          <ChatIcon sx={{ fontSize: 28 }} />
-        </button>
-        <button className="nav-btn">
-          <PersonIcon sx={{ fontSize: 28 }} />
-        </button>
-      </div>
+      
     </div>
   );
 };
