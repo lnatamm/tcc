@@ -29,6 +29,7 @@ CREATE TABLE "team"(
     "id_coach" SERIAL NOT NULL,
     "id_sport" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT NULL,
     "photo_path" TEXT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_by" TEXT NOT NULL,
@@ -70,6 +71,7 @@ ALTER TABLE
 CREATE TABLE "type_exercise"(
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_by" TEXT NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
@@ -102,8 +104,26 @@ CREATE TABLE "routine_has_exercice"(
     "id" SERIAL NOT NULL,
     "id_routine" SERIAL NOT NULL,
     "id_exercise" SERIAL NOT NULL,
-    "start" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-    "end" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+    "days_of_week" VARCHAR(255) CHECK
+        ("days_of_week" IN
+            (
+                'MONDAY',
+                'TUESDAY',
+                'WEDNESDAY',
+                'THURSDAY',
+                'FRIDAY',
+                'SATURDAY',
+                'SUNDAY'
+            )
+        ) NOT NULL,
+        "start_hour" TIME(0) WITHOUT TIME ZONE NOT NULL,
+        "end_hour" TIME(0) WITHOUT TIME ZONE NOT NULL,
+        "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+        "created_by" TEXT NOT NULL,
+        "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+        "updated_by" TEXT NULL,
+        "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+        "deleted_by" TEXT NULL
 );
 ALTER TABLE
     "routine_has_exercice" ADD PRIMARY KEY("id");
@@ -111,6 +131,7 @@ CREATE TABLE "routine"(
     "id" SERIAL NOT NULL,
     "id_athlete" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_by" TEXT NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
@@ -134,6 +155,14 @@ CREATE TABLE "level"(
 );
 ALTER TABLE
     "level" ADD PRIMARY KEY("id");
+CREATE TABLE "routine_exercise_excluded_dates"(
+    "id" SERIAL NOT NULL,
+    "id_routine_has_exercise" SERIAL NOT NULL,
+    "excluded_date" DATE NOT NULL,
+    "reason" TEXT NULL
+);
+ALTER TABLE
+    "routine_exercise_excluded_dates" ADD PRIMARY KEY("id");
 ALTER TABLE
     "coach" ADD CONSTRAINT "coach_id_level_foreign" FOREIGN KEY("id_level") REFERENCES "level"("id");
 ALTER TABLE
@@ -142,6 +171,8 @@ ALTER TABLE
     "team" ADD CONSTRAINT "team_id_sport_foreign" FOREIGN KEY("id_sport") REFERENCES "sport"("id");
 ALTER TABLE
     "enrollment" ADD CONSTRAINT "enrollment_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+ALTER TABLE
+    "routine_exercise_excluded_dates" ADD CONSTRAINT "routine_exercise_excluded_dates_id_routine_has_exercise_foreign" FOREIGN KEY("id_routine_has_exercise") REFERENCES "routine_has_exercice"("id");
 ALTER TABLE
     "routine" ADD CONSTRAINT "routine_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
 ALTER TABLE

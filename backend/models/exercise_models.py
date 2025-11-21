@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from models.crud_models import Create, Update
+from models.crud_models import Create, Update, Response
 
 class ExerciseBase(BaseModel):
     id_type: int
@@ -16,4 +16,7 @@ class ExerciseCreate(ExerciseBase, Create):
     pass
 
 class ExerciseUpdate(ExerciseBase, Update):
+    pass
+
+class Exercise(ExerciseBase, Response):
     pass

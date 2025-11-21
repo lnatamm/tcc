@@ -213,7 +213,10 @@ export const exerciseService = {
   },
 
   create: async (exerciseData) => {
-    const response = await api.post('/exercises/', exerciseData);
+    const { created_by, ...data } = exerciseData;
+    const response = await api.post('/exercises/', data, {
+      params: { user: created_by }
+    });
     return response.data;
   },
 
@@ -224,6 +227,73 @@ export const exerciseService = {
 
   delete: async (id) => {
     const response = await api.delete(`/exercises/${id}`);
+    return response.data;
+  },
+};
+
+// Routines
+export const routineService = {
+  getAll: async () => {
+    const response = await api.get('/routines/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/routines/${id}`);
+    return response.data;
+  },
+
+  getByAthlete: async (athleteId) => {
+    const response = await api.get(`/routines/athlete/${athleteId}`);
+    return response.data;
+  },
+
+  getExercises: async (routineId) => {
+    const response = await api.get(`/routines/${routineId}/exercises`);
+    return response.data;
+  },
+
+  create: async (routineData) => {
+    const { created_by, ...data } = routineData;
+    const response = await api.post('/routines/', data, {
+      params: { user: created_by }
+    });
+    return response.data;
+  },
+
+  update: async (id, routineData) => {
+    const response = await api.put(`/routines/${id}`, routineData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/routines/${id}`);
+    return response.data;
+  },
+
+  addExercise: async (routineExerciseData) => {
+    const { created_by, ...data } = routineExerciseData;
+    const response = await api.post(`/routines/${data.id_routine}/exercises`, data, {
+      params: { user: created_by }
+    });
+    return response.data;
+  },
+
+  removeExercise: async (routineExerciseId) => {
+    const response = await api.delete(`/routines/exercises/${routineExerciseId}`);
+    return response.data;
+  },
+};
+
+// Type Exercises
+export const typeExerciseService = {
+  getAll: async () => {
+    const response = await api.get('/type-exercises/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/type-exercises/${id}`);
     return response.data;
   },
 };

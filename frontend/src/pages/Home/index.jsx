@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import './style.css';
 import {useTeamsWithAthletes } from '../../hooks/useApi';
 import AddTeamModal from '../../components/AddTeamModal';
+import AthleteRoutinesModal from '../../components/AthleteRoutinesModal';
 import { Avatar } from '@mui/material';
 import api from '../../api';
 
 const Home = () => {
   const [expandedTeam, setExpandedTeam] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [routinesModalOpen, setRoutinesModalOpen] = useState(false);
+  const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [athletePhotos, setAthletePhotos] = useState({});
   const { data: teams = [], isLoading: loading, error } = useTeamsWithAthletes();
   
@@ -48,6 +51,16 @@ const Home = () => {
   }, [teams]);
   const toggleTeam = (teamId) => {
     setExpandedTeam(expandedTeam === teamId ? null : teamId);
+  };
+
+  const handleViewRoutines = (athlete) => {
+    setSelectedAthlete(athlete);
+    setRoutinesModalOpen(true);
+  };
+
+  const handleCloseRoutines = () => {
+    setRoutinesModalOpen(false);
+    setSelectedAthlete(null);
   };
 
   return (
@@ -131,7 +144,15 @@ const Home = () => {
                         {athlete.name.charAt(0).toUpperCase()}
                       </Avatar>
                       <span className="athlete-name">{athlete.name}</span>
-                      <button className="view-btn">view</button>
+                      <button 
+                        className="view-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewRoutines(athlete);
+                        }}
+                      >
+                        view
+                      </button>
                     </div>
                   ))
                 ) : (
@@ -155,7 +176,12 @@ const Home = () => {
         onClose={() => setModalOpen(false)}
       />
 
-      
+      <AthleteRoutinesModal
+        open={routinesModalOpen}
+        onClose={handleCloseRoutines}
+        athlete={selectedAthlete}
+        userName={userName}
+      />
     </div>
   );
 };

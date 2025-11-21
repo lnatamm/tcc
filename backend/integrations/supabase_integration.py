@@ -1,5 +1,4 @@
 import os
-import psycopg2
 from dotenv import load_dotenv
 from supabase import create_client
 from models.athlete_models import *
@@ -8,6 +7,7 @@ from models.enrollment_models import *
 from models.exercise_models import *
 from models.sport_models import *
 from models.team_models import *
+from models.routine_models import *
 
 class SupabaseIntegration:
     def __init__(self):
@@ -204,7 +204,9 @@ class SupabaseIntegration:
             "sets": exercise.sets,
             "description": exercise.description,
             "video_path": exercise.video_path,
-            "photo_path": exercise.photo_path
+            "photo_path": exercise.photo_path,
+            "created_by": exercise.created_by,
+            "created_at": exercise.created_at
         }
         return self.client.table('exercise').insert(data).execute()
     
@@ -236,6 +238,14 @@ class SupabaseIntegration:
     def delete_exercise(self, exercise_id: int):
         """Deletes an exercise"""
         return self.client.table('exercise').delete().eq('id', exercise_id).execute()
+
+    def get_all_type_exercises(self):
+        """Returns all exercise types"""
+        return self.client.table('type_exercise').select('*').order('name').execute()
+    
+    def get_type_exercise_by_id(self, type_id: int):
+        """Returns an exercise type by ID"""
+        return self.client.table('type_exercise').select('*').eq('id', type_id).execute()
 
     def get_all_sports(self):
         """Returns all sports"""
@@ -331,3 +341,79 @@ class SupabaseIntegration:
     def delete_team(self, team_id: int):
         """Deletes a team"""
         return self.client.table('team').delete().eq('id', team_id).execute()
+    
+    def get_all_routines(self):
+        """Returns all routines"""
+        return self.client.table('routine').select('*').order('name').execute()
+    
+    def get_routine_by_id(self, routine_id: int):
+        """Returns a routine by ID"""
+        return self.client.table('routine').select('*').eq('id', routine_id).execute()
+    
+    def get_routines_by_athlete_id(self, athlete_id: int):
+        """Returns all routines of an athlete"""
+        return self.client.table('routine').select('*').eq('id_athlete', athlete_id).order('name').execute()
+    
+    def get_exercises_by_routine_id(self, routine_id: int):
+        """Returns all exercises in a routine with their schedule"""
+        return self.client.table('routine_has_exercice').select('*, exercise(*)').eq('id_routine', routine_id).order('start_hour').execute()
+    
+    def create_routine(self, routine: RoutineCreate):
+        """Creates a new routine"""
+        data = {
+            "id_athlete": routine.id_athlete,
+            "name": routine.name,
+            "created_at": routine.created_at,
+            "created_by": routine.created_by
+        }
+        return self.client.table('routine').insert(data).execute()
+    
+    def update_routine(self, routine_id: int, routine_update: RoutineUpdate):
+        """Updates a routine"""
+        data = {}
+        if routine_update.name is not None:
+            data["name"] = routine_update.name
+            data["updated_by"] = routine_update.updated_by
+
+        if not data:
+            return self.client.table('routine').select('*').eq('id', routine_id).execute()
+        
+        return self.client.table('routine').update(data).eq('id', routine_id).execute()
+    
+    def delete_routine(self, routine_id: int):
+        """Deletes a routine"""
+        return self.client.table('routine').delete().eq('id', routine_id).execute()
+    
+    def add_exercise_to_routine(self, routine_exercise: RoutineHasExerciseCreate):
+        """Adds an exercise to a routine"""
+        data = {
+            "id_routine": routine_exercise.id_routine,
+            "id_exercise": routine_exercise.id_exercise,
+            "days_of_week": routine_exercise.days_of_week,
+            "start_hour": routine_exercise.start_hour,
+            "end_hour": routine_exercise.end_hour,
+            "created_at": routine_exercise.created_at,
+            "created_by": routine_exercise.created_by
+        }
+        return self.client.table('routine_has_exercice').insert(data).execute()
+    
+    def remove_exercise_from_routine(self, routine_exercise_id: int):
+        """Removes an exercise from a routine"""
+        return self.client.table('routine_has_exercice').delete().eq('id', routine_exercise_id).execute()
+    
+    def add_excluded_date(self, excluded_date: ExcludedDateCreate):
+        """Adds an excluded date to a routine exercise"""
+        data = {
+            "id_routine_has_exercise": excluded_date.id_routine_has_exercise,
+            "excluded_date": excluded_date.excluded_date.isoformat(),
+            "reason": excluded_date.reason
+        }
+        return self.client.table('routine_exercise_excluded_dates').insert(data).execute()
+    
+    def get_excluded_dates(self, routine_exercise_id: int):
+        """Returns all excluded dates for a routine exercise"""
+        return self.client.table('routine_exercise_excluded_dates').select('*').eq('id_routine_has_exercise', routine_exercise_id).order('excluded_date').execute()
+    
+    def delete_excluded_date(self, excluded_date_id: int):
+        """Deletes an excluded date"""
+        return self.client.table('routine_exercise_excluded_dates').delete().eq('id', excluded_date_id).execute()

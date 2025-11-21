@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from models.crud_models import Create, Update
+from models.crud_models import Create, Update, Response
 
 class SportBase(BaseModel):
     name: str
@@ -11,4 +11,7 @@ class SportCreate(SportBase, Create):
     pass
 
 class SportUpdate(SportBase, Update):
+    pass
+
+class Sport(SportBase, Response):
     pass

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from models.crud_models import Create, Update
+from models.crud_models import Create, Update, Response
 
 class CoachBase(BaseModel):
     name: str
@@ -11,4 +11,7 @@ class CoachCreate(CoachBase, Create):
     pass
 
 class CoachUpdate(CoachBase, Update):
+    pass
+
+class Coach(CoachBase, Response):
     pass

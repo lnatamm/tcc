@@ -4,7 +4,10 @@ import {
   athleteService, 
   enrollmentService,
   coachService,
-  sportService
+  sportService,
+  routineService,
+  exerciseService,
+  typeExerciseService
 } from '../services/apiService';
 
 // ============= TEAMS ============
@@ -293,5 +296,196 @@ export const useDeleteSport = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sports'] });
     },
+  });
+};
+
+// ============= EXERCISES =============
+
+export const useExercises = () => {
+  return useQuery({
+    queryKey: ['exercises'],
+    queryFn: exerciseService.getAll,
+  });
+};
+
+export const useExercise = (id) => {
+  return useQuery({
+    queryKey: ['exercise', id],
+    queryFn: () => exerciseService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useExercisesByTeam = (teamId) => {
+  return useQuery({
+    queryKey: ['exercises', 'team', teamId],
+    queryFn: () => exerciseService.getByTeam(teamId),
+    enabled: !!teamId,
+  });
+};
+
+export const useExercisesByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['exercises', 'athlete', athleteId],
+    queryFn: () => exerciseService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const useCreateExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: exerciseService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+};
+
+export const useUpdateExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => exerciseService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exercise', variables.id] });
+    },
+  });
+};
+
+export const useDeleteExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: exerciseService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+};
+
+// ============= ROUTINES =============
+
+export const useRoutines = () => {
+  return useQuery({
+    queryKey: ['routines'],
+    queryFn: routineService.getAll,
+  });
+};
+
+export const useRoutine = (id) => {
+  return useQuery({
+    queryKey: ['routine', id],
+    queryFn: () => routineService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useRoutinesByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['routines', 'athlete', athleteId],
+    queryFn: () => routineService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const useRoutineWithExercises = (routineId) => {
+  const { data: routine, ...routineQuery } = useRoutine(routineId);
+  
+  return useQuery({
+    queryKey: ['routine-with-exercises', routineId],
+    queryFn: async () => {
+      if (!routine) return null;
+      
+      const exercises = await routineService.getExercises(routineId);
+      return { ...routine, exercises };
+    },
+    enabled: !!routine,
+    ...routineQuery,
+  });
+};
+
+export const useRoutineExercises = (routineId) => {
+  return useQuery({
+    queryKey: ['routine-exercises', routineId],
+    queryFn: () => routineService.getExercises(routineId),
+    enabled: !!routineId,
+  });
+};
+
+export const useCreateRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+    },
+  });
+};
+
+export const useUpdateRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => routineService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+      queryClient.invalidateQueries({ queryKey: ['routine', variables.id] });
+    },
+  });
+};
+
+export const useDeleteRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+    },
+  });
+};
+
+export const useAddExerciseToRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.addExercise,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['routine-exercises', variables.id_routine] });
+      queryClient.invalidateQueries({ queryKey: ['routine-with-exercises', variables.id_routine] });
+    },
+  });
+};
+
+export const useRemoveExerciseFromRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.removeExercise,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routine-exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['routine-with-exercises'] });
+    },
+  });
+};
+
+// ============= TYPE EXERCISES =============
+
+export const useTypeExercises = () => {
+  return useQuery({
+    queryKey: ['type-exercises'],
+    queryFn: typeExerciseService.getAll,
+  });
+};
+
+export const useTypeExercise = (id) => {
+  return useQuery({
+    queryKey: ['type-exercise', id],
+    queryFn: () => typeExerciseService.getById(id),
+    enabled: !!id,
   });
 };

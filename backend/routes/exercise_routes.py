@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from models.exercise_models import ExerciseBase, ExerciseCreate, ExerciseUpdate
 from controllers.exercise_controller import ExerciseController
+from datetime import datetime
 
 api_exercises = APIRouter(prefix="/exercises", tags=["Exercises"])
 
@@ -78,10 +79,12 @@ def get_exercise_video(exercise_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_exercises.post("/", status_code=201)
-def create_exercise(exercise: ExerciseCreate):
+def create_exercise(exercise: ExerciseCreate, user: str = Query(...)):
     """Creates a new exercise"""
     try:
         controller = ExerciseController()
+        exercise.created_at = datetime.now().isoformat()
+        exercise.created_by = user
         result = controller.create_exercise(exercise)
         return result.data[0] if result.data else None
     except Exception as e:
