@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import './Home.css';
-import {useTeamsWithAthletes } from '../hooks/useApi';
-import AddTeamModal from '../components/AddTeamModal';
+import './style.css';
+import {useTeamsWithAthletes } from '../../hooks/useApi';
+import AddTeamModal from '../../components/AddTeamModal';
 import { Avatar } from '@mui/material';
-import api from '../api';
+import api from '../../api';
 
 const Home = () => {
   const [expandedTeam, setExpandedTeam] = useState(null);
@@ -90,8 +90,31 @@ const Home = () => {
               onClick={() => toggleTeam(team.id)}
             >
               <span className="team-name">{team.name}</span>
-              <span className="team-toggle">
-                {expandedTeam === team.id ? '∧' : '∨'}
+              <span
+                className="team-toggle"
+                aria-hidden="true"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {/* Chevron icon — rotates smoothly when expanded */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  style={{
+                    transform: expandedTeam === team.id ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 160ms ease',
+                    display: 'block',
+                    color: '#555'
+                  }}
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" fill="currentColor" />
+                </svg>
               </span>
             </div>
             
