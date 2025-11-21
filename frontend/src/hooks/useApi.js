@@ -1,189 +1,491 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { turmaService, atletaService, matriculaService } from '../services/apiService';
+import { 
+  teamService, 
+  athleteService, 
+  enrollmentService,
+  coachService,
+  sportService,
+  routineService,
+  exerciseService,
+  typeExerciseService
+} from '../services/apiService';
 
-// ============= TURMAS =============
+// ============= TEAMS ============
 
-export const useTurmas = () => {
+export const useTeams = () => {
   return useQuery({
-    queryKey: ['turmas'],
-    queryFn: turmaService.getAll,
+    queryKey: ['teams'],
+    queryFn: teamService.getAll,
   });
 };
 
-export const useTurma = (id) => {
+export const useTeam = (id) => {
   return useQuery({
-    queryKey: ['turma', id],
-    queryFn: () => turmaService.getById(id),
+    queryKey: ['team', id],
+    queryFn: () => teamService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useTurmasByTreinador = (treinadorId) => {
+export const useTeamsByCoach = (coachId) => {
   return useQuery({
-    queryKey: ['turmas', 'treinador', treinadorId],
-    queryFn: () => turmaService.getByTreinador(treinadorId),
-    enabled: !!treinadorId,
+    queryKey: ['teams', 'coach', coachId],
+    queryFn: () => teamService.getByCoach(coachId),
+    enabled: !!coachId,
   });
 };
 
-export const useTurmasComAtletas = () => {
-  const { data: turmas, ...queryInfo } = useTurmas();
+export const useTeamsWithAthletes = () => {
+  const { data: teams, ...queryInfo } = useTeams();
   
   return useQuery({
-    queryKey: ['turmas-com-atletas'],
+    queryKey: ['teams-with-athletes'],
     queryFn: async () => {
-      if (!turmas) return [];
+      if (!teams) return [];
       
-      const turmasComAtletas = await Promise.all(
-        turmas.map(async (turma) => {
+      const teamsWithAthletes = await Promise.all(
+        teams.map(async (team) => {
           try {
-            const matriculas = await matriculaService.getByTurma(turma.id);
-            const atletas = matriculas.map(m => m.atleta).filter(Boolean);
-            return { ...turma, atletas };
+            const enrollments = await enrollmentService.getByTeam(team.id);
+            const athletes = enrollments.map(m => m.athlete).filter(Boolean);
+            return { ...team, athletes };
           } catch (err) {
-            console.error(`Erro ao carregar atletas da turma ${turma.id}:`, err);
-            return { ...turma, atletas: [] };
+            console.error(`Error to load athletes of team ${team.id}:`, err);
+            return { ...team, athletes: [] };
           }
         })
       );
       
-      return turmasComAtletas;
+      return teamsWithAthletes;
     },
-    enabled: !!turmas,
+    enabled: !!teams,
     ...queryInfo,
   });
 };
 
-export const useCreateTurma = () => {
+export const useCreateTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: turmaService.create,
+    mutationFn: teamService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 };
 
-export const useUpdateTurma = () => {
+export const useUpdateTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => turmaService.update(id, data),
+    mutationFn: ({ id, data }) => teamService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
-      queryClient.invalidateQueries({ queryKey: ['turma', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['team', variables.id] });
     },
   });
 };
 
-export const useDeleteTurma = () => {
+export const useDeleteTeam = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: turmaService.delete,
+    mutationFn: teamService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 };
 
-// ============= ATLETAS =============
+// ============= ATHLETES =============
 
-export const useAtletas = () => {
+export const useAthletes = () => {
   return useQuery({
-    queryKey: ['atletas'],
-    queryFn: atletaService.getAll,
+    queryKey: ['athletes'],
+    queryFn: athleteService.getAll,
   });
 };
 
-export const useAtleta = (id) => {
+export const useAthlete = (id) => {
   return useQuery({
-    queryKey: ['atleta', id],
-    queryFn: () => atletaService.getById(id),
+    queryKey: ['athlete', id],
+    queryFn: () => athleteService.getById(id),
     enabled: !!id,
   });
 };
 
-export const useCreateAtleta = () => {
+export const useCreateAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: atletaService.create,
+    mutationFn: athleteService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
   });
 };
 
-export const useUpdateAtleta = () => {
+export const useUpdateAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => atletaService.update(id, data),
+    mutationFn: ({ id, data }) => athleteService.update(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
-      queryClient.invalidateQueries({ queryKey: ['atleta', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
+      queryClient.invalidateQueries({ queryKey: ['athlete', variables.id] });
     },
   });
 };
 
-export const useDeleteAtleta = () => {
+export const useDeleteAthlete = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: atletaService.delete,
+    mutationFn: athleteService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['athletes'] });
     },
   });
 };
 
-// ============= MATRÍCULAS =============
+// ============= ENROLLMENTS =============
 
-export const useMatriculas = () => {
+export const useEnrollments = () => {
   return useQuery({
-    queryKey: ['matriculas'],
-    queryFn: matriculaService.getAll,
+    queryKey: ['enrollments'],
+    queryFn: enrollmentService.getAll,
   });
 };
 
-export const useMatriculasByTurma = (turmaId) => {
+export const useEnrollmentsByTeam = (teamId) => {
   return useQuery({
-    queryKey: ['matriculas', 'turma', turmaId],
-    queryFn: () => matriculaService.getByTurma(turmaId),
-    enabled: !!turmaId,
+    queryKey: ['enrollments', 'team', teamId],
+    queryFn: () => enrollmentService.getByTeam(teamId),
+    enabled: !!teamId,
   });
 };
 
-export const useMatriculasByAtleta = (atletaId) => {
+export const useEnrollmentsByAthlete = (athleteId) => {
   return useQuery({
-    queryKey: ['matriculas', 'atleta', atletaId],
-    queryFn: () => matriculaService.getByAtleta(atletaId),
-    enabled: !!atletaId,
+    queryKey: ['enrollments', 'athlete', athleteId],
+    queryFn: () => enrollmentService.getByAthlete(athleteId),
+    enabled: !!athleteId,
   });
 };
 
-export const useCreateMatricula = () => {
+export const useCreateEnrollment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: matriculaService.create,
+    mutationFn: enrollmentService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
-      queryClient.invalidateQueries({ queryKey: ['turmas-com-atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['teams-with-athletes'] });
     },
   });
 };
 
-export const useDeleteMatricula = () => {
+export const useDeleteEnrollment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: matriculaService.delete,
+    mutationFn: enrollmentService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
-      queryClient.invalidateQueries({ queryKey: ['turmas-com-atletas'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['teams-with-athletes'] });
     },
+  });
+};
+
+// ============= COACHES =============
+
+export const useCoaches = () => {
+  return useQuery({
+    queryKey: ['coaches'],
+    queryFn: coachService.getAll,
+  });
+};
+
+export const useCoach = (id) => {
+  return useQuery({
+    queryKey: ['coach', id],
+    queryFn: () => coachService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateCoach = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: coachService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
+    },
+  });
+};
+
+export const useUpdateCoach = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => coachService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
+      queryClient.invalidateQueries({ queryKey: ['coach', variables.id] });
+    },
+  });
+};
+
+export const useDeleteCoach = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: coachService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
+    },
+  });
+};
+
+// ============= SPORTS =============
+
+export const useSports = () => {
+  return useQuery({
+    queryKey: ['sports'],
+    queryFn: sportService.getAll,
+  });
+};
+
+export const useSport = (id) => {
+  return useQuery({
+    queryKey: ['sport', id],
+    queryFn: () => sportService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateSport = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: sportService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
+    },
+  });
+};
+
+export const useUpdateSport = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => sportService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
+      queryClient.invalidateQueries({ queryKey: ['sport', variables.id] });
+    },
+  });
+};
+
+export const useDeleteSport = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: sportService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sports'] });
+    },
+  });
+};
+
+// ============= EXERCISES =============
+
+export const useExercises = () => {
+  return useQuery({
+    queryKey: ['exercises'],
+    queryFn: exerciseService.getAll,
+  });
+};
+
+export const useExercise = (id) => {
+  return useQuery({
+    queryKey: ['exercise', id],
+    queryFn: () => exerciseService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useExercisesByTeam = (teamId) => {
+  return useQuery({
+    queryKey: ['exercises', 'team', teamId],
+    queryFn: () => exerciseService.getByTeam(teamId),
+    enabled: !!teamId,
+  });
+};
+
+export const useExercisesByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['exercises', 'athlete', athleteId],
+    queryFn: () => exerciseService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const useCreateExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: exerciseService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+};
+
+export const useUpdateExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => exerciseService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['exercise', variables.id] });
+    },
+  });
+};
+
+export const useDeleteExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: exerciseService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exercises'] });
+    },
+  });
+};
+
+// ============= ROUTINES =============
+
+export const useRoutines = () => {
+  return useQuery({
+    queryKey: ['routines'],
+    queryFn: routineService.getAll,
+  });
+};
+
+export const useRoutine = (id) => {
+  return useQuery({
+    queryKey: ['routine', id],
+    queryFn: () => routineService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useRoutinesByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['routines', 'athlete', athleteId],
+    queryFn: () => routineService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const useRoutineWithExercises = (routineId) => {
+  const { data: routine, ...routineQuery } = useRoutine(routineId);
+  
+  return useQuery({
+    queryKey: ['routine-with-exercises', routineId],
+    queryFn: async () => {
+      if (!routine) return null;
+      
+      const exercises = await routineService.getExercises(routineId);
+      return { ...routine, exercises };
+    },
+    enabled: !!routine,
+    ...routineQuery,
+  });
+};
+
+export const useRoutineExercises = (routineId) => {
+  return useQuery({
+    queryKey: ['routine-exercises', routineId],
+    queryFn: () => routineService.getExercises(routineId),
+    enabled: !!routineId,
+  });
+};
+
+export const useCreateRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+    },
+  });
+};
+
+export const useUpdateRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }) => routineService.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+      queryClient.invalidateQueries({ queryKey: ['routine', variables.id] });
+    },
+  });
+};
+
+export const useDeleteRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routines'] });
+    },
+  });
+};
+
+export const useAddExerciseToRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.addExercise,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['routine-exercises', variables.id_routine] });
+      queryClient.invalidateQueries({ queryKey: ['routine-with-exercises', variables.id_routine] });
+    },
+  });
+};
+
+export const useRemoveExerciseFromRoutine = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: routineService.removeExercise,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routine-exercises'] });
+      queryClient.invalidateQueries({ queryKey: ['routine-with-exercises'] });
+    },
+  });
+};
+
+// ============= TYPE EXERCISES =============
+
+export const useTypeExercises = () => {
+  return useQuery({
+    queryKey: ['type-exercises'],
+    queryFn: typeExerciseService.getAll,
+  });
+};
+
+export const useTypeExercise = (id) => {
+  return useQuery({
+    queryKey: ['type-exercise', id],
+    queryFn: () => typeExerciseService.getById(id),
+    enabled: !!id,
   });
 };
