@@ -19,6 +19,10 @@ import {
   Grid,
   Tabs,
   Tab,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import ScheduleIcon from '@mui/icons-material/Schedule';
@@ -28,17 +32,22 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import TodayIcon from '@mui/icons-material/Today';
+import InfoIcon from '@mui/icons-material/Info';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import TimerIcon from '@mui/icons-material/Timer';
+import NotesIcon from '@mui/icons-material/Notes';
+import CategoryIcon from '@mui/icons-material/Category';
 import { useRoutinesByAthlete, useRoutineExercises, useCreateRoutine } from '../hooks/useApi';
 import AddExerciseToRoutineModal from './AddExerciseToRoutineModal';
 
 const DAYS_OF_WEEK = [
-  { key: 'MONDAY', label: 'Segunda', short: 'SEG', index: 1 },
-  { key: 'TUESDAY', label: 'Terça', short: 'TER', index: 2 },
-  { key: 'WEDNESDAY', label: 'Quarta', short: 'QUA', index: 3 },
-  { key: 'THURSDAY', label: 'Quinta', short: 'QUI', index: 4 },
-  { key: 'FRIDAY', label: 'Sexta', short: 'SEX', index: 5 },
-  { key: 'SATURDAY', label: 'Sábado', short: 'SÁB', index: 6 },
-  { key: 'SUNDAY', label: 'Domingo', short: 'DOM', index: 0 },
+  { key: 'MONDAY', label: 'Monday', short: 'MON', index: 1 },
+  { key: 'TUESDAY', label: 'Tuesday', short: 'TUE', index: 2 },
+  { key: 'WEDNESDAY', label: 'Wednesday', short: 'WED', index: 3 },
+  { key: 'THURSDAY', label: 'Thursday', short: 'THU', index: 4 },
+  { key: 'FRIDAY', label: 'Friday', short: 'FRI', index: 5 },
+  { key: 'SATURDAY', label: 'Saturday', short: 'SAT', index: 6 },
+  { key: 'SUNDAY', label: 'Sunday', short: 'SUN', index: 0 },
 ];
 
 const getWeekDates = (weekOffset = 0) => {
@@ -64,8 +73,8 @@ const formatWeekRange = (weekDates) => {
   const start = weekDates[0];
   const end = weekDates[6];
   
-  const startStr = start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
-  const endStr = end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
+  const startStr = start.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  const endStr = end.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   
   return `${startStr} - ${endStr}`;
 };
@@ -77,12 +86,284 @@ const isToday = (date) => {
          date.getFullYear() === today.getFullYear();
 };
 
-const ExerciseCard = ({ exercise, routineExercise }) => {
+const ExerciseDetailsModal = ({ open, onClose, exercise, routineExercise }) => {
+  if (!exercise) return null;
+
+  const startTime = routineExercise?.start_hour || '';
+  const endTime = routineExercise?.end_hour || '';
+  
+  const calculateDuration = () => {
+    if (!startTime || !endTime) return 'N/A';
+    
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    const diffMinutes = endMinutes - startMinutes;
+    
+    if (diffMinutes <= 0) return 'Invalid time';
+    
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    if (hours > 0 && minutes > 0) {
+      return `${hours}h ${minutes}min`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else {
+      return `${minutes}min`;
+    }
+  };
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle 
+        sx={{ 
+          backgroundColor: 'primary.main',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          py: 2.5,
+        }}
+      >
+        <FitnessCenterIcon sx={{ fontSize: 28 }} />
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h6" fontWeight="600">
+            {exercise.name}
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+            Exercise Details
+          </Typography>
+        </Box>
+        <IconButton 
+          onClick={onClose}
+          sx={{ 
+            color: 'white',
+            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      
+      <DialogContent sx={{ p: 0 }}>
+        {/* Horário Section */}
+        <Box sx={{ p: 3, backgroundColor: '#f8f9fa' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <ScheduleIcon sx={{ color: 'primary.main' }} />
+            <Typography variant="subtitle1" fontWeight="600">
+              Schedule
+            </Typography>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Paper elevation={0} sx={{ p: 2, backgroundColor: 'white', textAlign: 'center' }}>
+                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                  Start
+                </Typography>
+                <Typography variant="h6" fontWeight="600" color="primary.main">
+                  {startTime || 'N/A'}
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={6}>
+              <Paper elevation={0} sx={{ p: 2, backgroundColor: 'white', textAlign: 'center' }}>
+                <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                  End
+                </Typography>
+                <Typography variant="h6" fontWeight="600" color="primary.main">
+                  {endTime || 'N/A'}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
+            <TimerIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+            <Typography variant="body2" color="text.secondary">
+              Duration: <strong>{calculateDuration()}</strong>
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
+        {/* Exercise Details Section */}
+        <Box sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <InfoIcon sx={{ color: 'primary.main' }} />
+            <Typography variant="subtitle1" fontWeight="600">
+              Exercise Information
+            </Typography>
+          </Box>
+
+          <List sx={{ p: 0 }}>
+            {exercise.type_exercise && (
+              <>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <Box 
+                      sx={{ 
+                        backgroundColor: 'primary.light',
+                        borderRadius: 1,
+                        p: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <CategoryIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Type
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {exercise.type_exercise.name}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+                <Divider />
+              </>
+            )}
+
+            {exercise.sets && (
+              <>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <Box 
+                      sx={{ 
+                        backgroundColor: 'secondary.light',
+                        borderRadius: 1,
+                        p: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <RepeatIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Sets
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {exercise.sets}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+                <Divider />
+              </>
+            )}
+
+            {exercise.reps && (
+              <>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <Box 
+                      sx={{ 
+                        backgroundColor: 'success.light',
+                        borderRadius: 1,
+                        p: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <RepeatIcon sx={{ fontSize: 20, color: 'success.main' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Repetitions
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {exercise.reps}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+                <Divider />
+              </>
+            )}
+
+            {exercise.rest_time && (
+              <>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <Box 
+                      sx={{ 
+                        backgroundColor: 'warning.light',
+                        borderRadius: 1,
+                        p: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <TimerIcon sx={{ fontSize: 20, color: 'warning.main' }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Rest Time
+                      </Typography>
+                      <Typography variant="body1" fontWeight="500">
+                        {exercise.rest_time}s
+                      </Typography>
+                    </Box>
+                  </Box>
+                </ListItem>
+                <Divider />
+              </>
+            )}
+          </List>
+
+          {exercise.description && (
+            <Box sx={{ mt: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                <NotesIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="subtitle1" fontWeight="600">
+                  Description
+                </Typography>
+              </Box>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  p: 2, 
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                  {exercise.description}
+                </Typography>
+              </Paper>
+            </Box>
+          )}
+        </Box>
+      </DialogContent>
+      
+      <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 2 }}>
+        <Button onClick={onClose} variant="contained">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const ExerciseCard = ({ exercise, routineExercise, onClick }) => {
   const startTime = routineExercise.start_hour || '';
   const endTime = routineExercise.end_hour || '';
 
   return (
     <Card 
+      onClick={onClick}
       sx={{ 
         mb: 1.5,
         border: '1px solid',
@@ -91,9 +372,11 @@ const ExerciseCard = ({ exercise, routineExercise }) => {
         borderLeftColor: 'primary.main',
         boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
         transition: 'all 0.2s ease',
+        cursor: 'pointer',
         '&:hover': {
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           transform: 'translateY(-2px)',
+          backgroundColor: 'rgba(25, 118, 210, 0.04)',
         }
       }}
     >
@@ -125,7 +408,7 @@ const ExerciseCard = ({ exercise, routineExercise }) => {
                 textOverflow: 'ellipsis',
               }}
             >
-              {exercise?.name || 'Exercício Desconhecido'}
+              {exercise?.name || 'Unknown Exercise'}
             </Typography>
             
             {exercise?.description && (
@@ -133,7 +416,10 @@ const ExerciseCard = ({ exercise, routineExercise }) => {
                 variant="caption" 
                 color="text.secondary"
                 sx={{ 
-                  display: 'block',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                   mb: 1,
                   lineHeight: 1.4,
                 }}
@@ -150,10 +436,10 @@ const ExerciseCard = ({ exercise, routineExercise }) => {
             </Box>
             
             {exercise && (
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
                 {exercise.sets && (
                   <Chip 
-                    label={`${exercise.sets} séries`} 
+                    label={`${exercise.sets} sets`} 
                     size="small" 
                     sx={{ 
                       height: 22,
@@ -177,6 +463,20 @@ const ExerciseCard = ({ exercise, routineExercise }) => {
                     }}
                   />
                 )}
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: 'primary.main',
+                    fontWeight: 500,
+                    ml: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <InfoIcon sx={{ fontSize: 14 }} />
+                  View details
+                </Typography>
               </Box>
             )}
           </Box>
@@ -194,9 +494,24 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
     return dayMap[today] || 'MONDAY';
   });
   const [addExerciseModalOpen, setAddExerciseModalOpen] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState(null);
+  const [selectedRoutineExercise, setSelectedRoutineExercise] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
   const { data: exercises = [], isLoading, error } = useRoutineExercises(routineId);
+
+  const handleExerciseClick = (exercise, routineExercise) => {
+    setSelectedExercise(exercise);
+    setSelectedRoutineExercise(routineExercise);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setSelectedExercise(null);
+    setSelectedRoutineExercise(null);
+  };
 
   const exercisesByDay = useMemo(() => {
     const grouped = {};
@@ -236,7 +551,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Erro ao carregar exercícios: {error.message}
+        Error loading exercises: {error.message}
       </Alert>
     );
   }
@@ -248,7 +563,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="subtitle1" fontWeight="600" color="text.primary">
               <CalendarTodayIcon sx={{ fontSize: 18, mr: 1, verticalAlign: 'middle' }} />
-              Calendário Semanal
+              Weekly Calendar
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconButton 
@@ -303,7 +618,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
                     ml: 1,
                   }}
                 >
-                  Hoje
+                  Today
                 </Button>
               )}
             </Box>
@@ -315,7 +630,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
             onClick={() => setAddExerciseModalOpen(true)}
             sx={{ textTransform: 'none', fontWeight: 500 }}
           >
-            Adicionar Exercício
+            Add Exercise
           </Button>
         </Box>
         
@@ -409,7 +724,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
             {DAYS_OF_WEEK.find(d => d.key === selectedDay)?.label}
           </Typography>
           <Typography variant="body2" color="text.secondary" fontWeight="500">
-            {weekDates[DAYS_OF_WEEK.findIndex(d => d.key === selectedDay)].toLocaleDateString('pt-BR', { 
+            {weekDates[DAYS_OF_WEEK.findIndex(d => d.key === selectedDay)].toLocaleDateString('en-US', { 
               day: 'numeric', 
               month: 'long',
               year: 'numeric' 
@@ -429,10 +744,10 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
           >
             <CalendarTodayIcon sx={{ fontSize: 48, color: 'action.disabled', mb: 2 }} />
             <Typography variant="body1" color="text.secondary" fontWeight="500">
-              Nenhum exercício planejado
+              No exercise planned
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Adicione exercícios para este dia
+              Add exercises for this day
             </Typography>
           </Paper>
         ) : (
@@ -442,6 +757,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
                 key={routineExercise.id}
                 exercise={routineExercise.exercise}
                 routineExercise={routineExercise}
+                onClick={() => handleExerciseClick(routineExercise.exercise, routineExercise)}
               />
             ))}
           </Box>
@@ -454,6 +770,13 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
         routineId={routineId}
         routineName={routineName}
         userName={userName}
+      />
+
+      <ExerciseDetailsModal
+        open={detailsModalOpen}
+        onClose={handleCloseDetailsModal}
+        exercise={selectedExercise}
+        routineExercise={selectedRoutineExercise}
       />
     </>
   );
@@ -470,7 +793,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
 
   const handleCreateRoutine = async () => {
     if (!newRoutineName.trim()) {
-      setCreateError('Nome da rotina é obrigatório');
+      setCreateError('Routine name is required');
       return;
     }
 
@@ -485,7 +808,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
       setNewRoutineName('');
       setShowCreateForm(false);
     } catch (err) {
-      setCreateError(err.message || 'Falha ao criar rotina');
+      setCreateError(err.message || 'Failed to create routine');
     }
   };
 
@@ -519,7 +842,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="h5" component="div" fontWeight="600">
-              Rotinas de Treino
+              Training Routines
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {athlete?.name}
@@ -531,7 +854,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
             onClick={() => setShowCreateForm(!showCreateForm)}
             sx={{ textTransform: 'none', fontWeight: 500 }}
           >
-            Nova Rotina
+            New Routine
           </Button>
         </Box>
       </DialogTitle>
@@ -551,8 +874,8 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
               <Box sx={{ flex: 1 }}>
                 <TextField
                   fullWidth
-                  label="Nome da Rotina"
-                  placeholder="Ex: Treino de Segunda e Quarta"
+                  label="Routine Name"
+                  placeholder="e.g., Monday and Wednesday Training"
                   value={newRoutineName}
                   onChange={(e) => setNewRoutineName(e.target.value)}
                   size="medium"
@@ -571,14 +894,14 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
                     onClick={handleCreateRoutine}
                     disabled={createRoutine.isPending}
                   >
-                    {createRoutine.isPending ? 'Criando...' : 'Criar Rotina'}
+                    {createRoutine.isPending ? 'Creating...' : 'Create Routine'}
                   </Button>
                   <Button
                     variant="outlined"
                     onClick={handleCancelCreate}
                     disabled={createRoutine.isPending}
                   >
-                    Cancelar
+                    Cancel
                   </Button>
                 </Box>
               </Box>
@@ -600,7 +923,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
         
         {error && (
           <Alert severity="error" sx={{ m: 3 }}>
-            Erro ao carregar rotinas: {error.message}
+            Error loading routines: {error.message}
           </Alert>
         )}
         
@@ -608,10 +931,10 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
           <Box sx={{ textAlign: 'center', p: 6 }}>
             <CalendarTodayIcon sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" fontWeight="500">
-              Nenhuma rotina encontrada
+              No routine found
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Clique em "Nova Rotina" para começar
+              Click "New Routine" to get started
             </Typography>
           </Box>
         )}
@@ -663,7 +986,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
       </DialogContent>
       
       <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 2 }}>
-        <Button onClick={onClose} variant="outlined">Fechar</Button>
+        <Button onClick={onClose} variant="outlined">Close</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
+import TodayIcon from '@mui/icons-material/Today';
 import ChatIcon from '@mui/icons-material/Chat';
 import PersonIcon from '@mui/icons-material/Person';
 import './Navbar.css';
@@ -18,6 +19,12 @@ const Navbar = () => {
             className={`navbar-link ${location.pathname === '/' ? 'active' : ''}`}
           >
             <HomeIcon sx={{ fontSize: 24 }} />
+          </Link>
+          <Link 
+            to="/today" 
+            className={`navbar-link ${location.pathname === '/today' ? 'active' : ''}`}
+          >
+            <TodayIcon sx={{ fontSize: 24 }} />
           </Link>
           <Link 
             to="/chat" 
