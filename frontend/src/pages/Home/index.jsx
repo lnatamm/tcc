@@ -76,9 +76,9 @@ const Home = () => {
 
       <div className="quick-actions">
         <button className="action-card" onClick={() => navigate('/routines')}>Routines</button>
-        <button className="action-card">Oto canto</button>
-        <button className="action-card">Oto canto</button>
-        <button className="action-card">Oto canto</button>
+        <button className="action-card">Sports</button>
+        <button className="action-card">Exercises</button>
+        <button className="action-card">Dashboard</button>
       </div>
 
       <div className="teams-section">

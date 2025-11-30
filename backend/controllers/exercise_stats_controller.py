@@ -311,9 +311,6 @@ class ExerciseStatsController:
                         
                         if stats:
                             stats_data = {
-                                "sets": stats.get("sets"),
-                                "reps": stats.get("reps"),
-                                "goal": stats.get("goal"),
                                 "concluded_sets": stats.get("concluded_sets"),
                                 "concluded_reps": stats.get("concluded_reps"),
                                 "concluded_goal": stats.get("concluded_goal"),
@@ -321,13 +318,20 @@ class ExerciseStatsController:
                                 "end_date": stats.get("end_date")
                             }
 
+                # Get original exercise values from routine_has_exercise
+                exercise_obj = routine_exercise["exercise"]
+                print(f"DEBUG - Exercise: {exercise_obj.get('name')}, Sets: {exercise_obj.get('sets')}, Reps: {exercise_obj.get('reps')}")
+                
                 exercise_data = {
-                    "id": routine_exercise["exercise"]["id"],
+                    "id": exercise_obj["id"],
                     "routine_has_exercise_id": routine_exercise["id"],
-                    "exercise": routine_exercise["exercise"],
+                    "exercise": exercise_obj,
                     "days_of_week": routine_exercise["days_of_week"],
                     "start_hour": routine_exercise["start_hour"],
                     "end_hour": routine_exercise["end_hour"],
+                    "sets": exercise_obj.get("sets"),
+                    "reps": exercise_obj.get("reps"),
+                    "goal": exercise_obj.get("goal"),
                     "status": status,
                     "exercise_history_id": exercise_history_id,
                     "exercise_stats_id": exercise_stats_id,
