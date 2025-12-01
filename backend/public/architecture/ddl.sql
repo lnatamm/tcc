@@ -233,6 +233,7 @@ CREATE TABLE "formula"(
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NULL,
+    "max_arguments" BIGINT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
     "created_by" TEXT NOT NULL,
     "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,

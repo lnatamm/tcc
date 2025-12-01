@@ -61,6 +61,14 @@ def get_all_formulas():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/athlete-metrics")
+def get_all_athlete_metrics():
+    """Get all athlete metrics"""
+    try:
+        return metric_controller.get_all_athlete_metrics()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/athlete-metrics")
 def create_athlete_metric(payload: AthleteMetricCreate):
     """Create a new athlete metric"""

@@ -1,6 +1,7 @@
 from integrations.supabase_integration import SupabaseIntegration
 from models.metric_models import *
 from typing import List, Dict, Callable
+from datetime import datetime
 
 # Definir as fórmulas predefinidas
 def metric_sum(metrics: List[Dict]) -> float:
@@ -10,11 +11,12 @@ def metric_sum(metrics: List[Dict]) -> float:
 def metric_division(metrics: List[Dict]) -> float:
     """Divisão: primeiro métrica dividido pelo segundo (proporção)"""
     if len(metrics) < 2:
-        return 0
+        return None
     numerator = float(metrics[0].get('value', 0) or 0)
-    denominator = float(metrics[1].get('value', 0) or 1)
+    denominator = float(metrics[1].get('value', 0) or 0)
+    # Return None if denominator is zero to avoid division by zero
     if denominator == 0:
-        return 0
+        return None
     return numerator / denominator
 
 def metric_average(metrics: List[Dict]) -> float:
@@ -55,11 +57,15 @@ class MetricController:
     
     def create_metric(self, payload: MetricCreate):
         """Creates a new metric"""
-        return self.supabase_integration.create('metric', payload.model_dump())
+        data = payload.model_dump()
+        data['created_at'] = datetime.now().isoformat()
+        return self.supabase_integration.create('metric', data)
     
     def update_metric(self, metric_id: int, payload: MetricUpdate):
         """Updates a metric"""
-        return self.supabase_integration.update('metric', metric_id, payload.model_dump())
+        data = payload.model_dump()
+        data['updated_at'] = datetime.now().isoformat()
+        return self.supabase_integration.update('metric', metric_id, data)
     
     def delete_metric(self, metric_id: int):
         """Deletes a metric"""
@@ -76,26 +82,41 @@ class MetricController:
         response = query.execute()
         athlete_metrics = response.data
         
-        # Organizar métricas por ID para fácil acesso
+        # Organizar métricas por ID, agrupando múltiplos valores
         metrics_dict = {}
-        result = []
+        metric_values = {}  # Para armazenar múltiplos valores da mesma métrica
         
         for am in athlete_metrics:
             metric_data = am['metric']
             metric_id = metric_data['id']
             
-            metrics_dict[metric_id] = {
-                'id': metric_id,
-                'id_formula': metric_data.get('id_formula'),
-                'id_coach': metric_data.get('id_coach'),
-                'id_sport': metric_data.get('id_sport'),
-                'ids_metrics': metric_data.get('ids_metrics'),
-                'name': metric_data['name'],
-                'description': metric_data.get('description'),
-                'aggregated': metric_data['aggregated'],
-                'value': am.get('value'),
-                'created_at': metric_data['created_at']
-            }
+            # Se ainda não existe no dicionário, criar entrada
+            if metric_id not in metrics_dict:
+                metrics_dict[metric_id] = {
+                    'id': metric_id,
+                    'id_formula': metric_data.get('id_formula'),
+                    'id_coach': metric_data.get('id_coach'),
+                    'id_sport': metric_data.get('id_sport'),
+                    'ids_metrics': metric_data.get('ids_metrics'),
+                    'name': metric_data['name'],
+                    'description': metric_data.get('description'),
+                    'aggregated': metric_data['aggregated'],
+                    'value': None,
+                    'created_at': metric_data['created_at']
+                }
+                metric_values[metric_id] = []
+            
+            # Adicionar valor à lista
+            value = am.get('value')
+            if value is not None:
+                metric_values[metric_id].append(float(value))
+        
+        # Somar valores para métricas não agregadas
+        for metric_id, metric in metrics_dict.items():
+            if not metric['aggregated']:
+                # Somar todos os valores da métrica
+                if metric_values[metric_id]:
+                    metric['value'] = sum(metric_values[metric_id])
         
         # Calcular valores agregados
         for metric_id, metric in metrics_dict.items():
@@ -106,24 +127,61 @@ class MetricController:
                     component_ids = [int(mid.strip()) for mid in ids_metrics.split(',')]
                     component_metrics = [metrics_dict.get(mid) for mid in component_ids if mid in metrics_dict]
                     
-                    # Aplicar fórmula
-                    formula_id = str(metric['id_formula'])
-                    if formula_id in FORMULAS:
-                        calculated_value = FORMULAS[formula_id](component_metrics)
-                        metric['value'] = round(calculated_value, 2)
-            
-            result.append(metric)
+                    # Verificar se todas as métricas componentes existem e têm valores válidos
+                    if len(component_metrics) == len(component_ids):
+                        all_valid = all(
+                            m is not None and m.get('value') is not None 
+                            for m in component_metrics
+                        )
+                        
+                        if all_valid:
+                            # Aplicar fórmula aos valores somados
+                            formula_id = str(metric['id_formula'])
+                            if formula_id in FORMULAS:
+                                try:
+                                    calculated_value = FORMULAS[formula_id](component_metrics)
+                                    # Only set value if calculation returned a valid number (not None)
+                                    if calculated_value is not None:
+                                        metric['value'] = round(calculated_value, 2)
+                                    else:
+                                        # Keep value as None if calculation failed (e.g., division by zero)
+                                        metric['value'] = None
+                                except Exception as e:
+                                    # Handle any unexpected errors gracefully
+                                    print(f"Error calculating metric {metric_id}: {e}")
+                                    metric['value'] = None
+                        else:
+                            # If any component metric is missing or has no value, result is None
+                            metric['value'] = None
+                    else:
+                        # If not all component metrics are available, result is None
+                        metric['value'] = None
         
+        result = list(metrics_dict.values())
         return result
     
     def get_all_formulas(self):
         """Returns all formulas"""
         return self.supabase_integration.get_all('formula')
     
+    def get_all_athlete_metrics(self):
+        """Returns all athlete metrics"""
+        return self.supabase_integration.get_all('athlete_has_metric')
+    
     def create_athlete_metric(self, payload: AthleteMetricCreate):
         """Creates a new athlete metric"""
-        return self.supabase_integration.create('athlete_has_metric', payload.model_dump())
+        data = payload.model_dump()
+        data['created_at'] = datetime.now().isoformat()
+        # TODO: Remove this conversion when database column type is changed from BIGINT to FLOAT/NUMERIC
+        if data.get('value') is not None:
+            data['value'] = int(data['value'])
+        return self.supabase_integration.create('athlete_has_metric', data)
     
     def update_athlete_metric(self, athlete_metric_id: int, payload: AthleteMetricUpdate):
         """Updates an athlete metric"""
-        return self.supabase_integration.update('athlete_has_metric', athlete_metric_id, payload.model_dump())
+        data = payload.model_dump()
+        data['updated_at'] = datetime.now().isoformat()
+        # TODO: Remove this conversion when database column type is changed from BIGINT to FLOAT/NUMERIC
+        if data.get('value') is not None:
+            data['value'] = int(data['value'])
+        return self.supabase_integration.update('athlete_has_metric', athlete_metric_id, data)
