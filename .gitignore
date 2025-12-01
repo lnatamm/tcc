@@ -30,3 +30,28 @@ pnpm-debug.log*
 # Temporary folders
 tmp/
 temp/
+sandbox/
+
+# Environment files - não commitar credenciais reais
+.env
+.env.local
+.env.production
+.env.vm
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+dist/
+.npm
+
+# Docker
+.dockerignore

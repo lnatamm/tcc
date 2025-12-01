@@ -1,0 +1,11 @@
+.dashboard-container {
+  padding: 2rem;
+}
+
+.metric-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+}

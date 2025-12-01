@@ -4,6 +4,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
 import ChatIcon from '@mui/icons-material/Chat';
 import PersonIcon from '@mui/icons-material/Person';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -25,6 +26,12 @@ const Navbar = () => {
             className={`navbar-link ${location.pathname === '/today' ? 'active' : ''}`}
           >
             <TodayIcon sx={{ fontSize: 24 }} />
+          </Link>
+          <Link 
+            to="/dashboard" 
+            className={`navbar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+          >
+            <DashboardIcon sx={{ fontSize: 24 }} />
           </Link>
           <Link 
             to="/chat" 

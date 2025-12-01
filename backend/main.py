@@ -17,16 +17,26 @@ from routes.enrollment_routes import api_enrollments
 from routes.routine_routes import api_routines
 from routes.type_exercise_routes import api_type_exercises
 from routes.exercise_stats_routes import router as exercise_stats_router
+from routes.metric_routes import router as metric_router
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
 
 # Attention: Adjust the origins list to match your frontend's URL
 # For example, if your frontend is running on localhost:5173, you can set it
+# Support for multiple environments: local, VM, and custom URLs
+client_url = os.getenv("VITE_CLIENT_URL", "http://localhost:5173")
 origins: List[str] = [
     "http://localhost:8080",
-    VITE_CLIENT_URL if (VITE_CLIENT_URL := os.getenv("VITE_CLIENT_URL")) else "http://localhost:5173",
+    "http://localhost:5173",
+    "http://localhost",
+    "http://34.70.210.208",  # VM external IP
+    "http://34.70.210.208:80",
+    client_url,
 ]
+
+# Remove duplicates while preserving order
+origins = list(dict.fromkeys(origins))
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,6 +56,7 @@ api.include_router(api_enrollments)
 api.include_router(api_routines)
 api.include_router(api_type_exercises)
 api.include_router(exercise_stats_router)
+api.include_router(metric_router)
 
 app.include_router(api)
 

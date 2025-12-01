@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
+import Dashboard from './pages/Dashboard';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/routines" element={<RoutinesPage />} />
           <Route path="/today" element={<TodayRoutines />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
     </Router>

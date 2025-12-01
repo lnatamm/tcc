@@ -417,3 +417,31 @@ class SupabaseIntegration:
     def delete_excluded_date(self, excluded_date_id: int):
         """Deletes an excluded date"""
         return self.client.table('routine_exercise_excluded_dates').delete().eq('id', excluded_date_id).execute()
+    
+    # ============= GENERIC METHODS =============
+    
+    def get_all(self, table_name: str):
+        """Generic method to get all records from a table"""
+        return self.client.table(table_name).select('*').is_('deleted_at', 'null').execute().data
+    
+    def get_by_id(self, table_name: str, record_id: int):
+        """Generic method to get a record by ID"""
+        result = self.client.table(table_name).select('*').eq('id', record_id).is_('deleted_at', 'null').execute()
+        return result.data[0] if result.data else None
+    
+    def create(self, table_name: str, data: dict):
+        """Generic method to create a record"""
+        return self.client.table(table_name).insert(data).execute().data[0]
+    
+    def update(self, table_name: str, record_id: int, data: dict):
+        """Generic method to update a record"""
+        return self.client.table(table_name).update(data).eq('id', record_id).execute().data[0]
+    
+    def delete(self, table_name: str, record_id: int):
+        """Generic method to soft delete a record"""
+        from datetime import datetime
+        data = {
+            "deleted_at": datetime.now().isoformat(),
+            "deleted_by": "system"  # TODO: Get from auth context
+        }
+        return self.client.table(table_name).update(data).eq('id', record_id).execute().data[0]
