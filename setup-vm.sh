@@ -8,13 +8,26 @@ set -e  # Parar em caso de erro
 echo "==> Configurando Athletrics na VM do Google Cloud..."
 echo ""
 
+# Detectar sistema operacional
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    VERSION=$VERSION_CODENAME
+else
+    OS="unknown"
+    VERSION="unknown"
+fi
+
 # 1. Verificar se Docker esta instalado
 echo "[1/7] Verificando Docker..."
 if ! command -v docker &> /dev/null; then
+    echo "      Sistema detectado: $OS $VERSION"
     echo "      Instalando Docker..."
     
-    # Remover instalacoes antigas
+    # Remover instalacoes antigas e repositorios incorretos
     sudo apt-get remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
+    sudo rm -f /etc/apt/sources.list.d/docker.list
+    sudo rm -f /etc/apt/sources.list.d/archive_uri-https_download_docker_com_linux_ubuntu*.list 2>/dev/null || true
     
     # Atualizar repositorios
     sudo apt-get update
@@ -22,13 +35,21 @@ if ! command -v docker &> /dev/null; then
     
     # Adicionar chave GPG oficial do Docker
     sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
     
-    # Configurar repositorio
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    # Usar repositorio correto baseado no OS
+    if [ "$OS" = "debian" ]; then
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+          $VERSION stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    else
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          $VERSION stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    fi
     
     # Instalar Docker Engine
     sudo apt-get update
