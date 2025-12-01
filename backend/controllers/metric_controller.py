@@ -82,41 +82,27 @@ class MetricController:
         response = query.execute()
         athlete_metrics = response.data
         
-        # Organizar métricas por ID, agrupando múltiplos valores
+        # Organizar métricas por ID (uma única entrada por métrica)
         metrics_dict = {}
-        metric_values = {}  # Para armazenar múltiplos valores da mesma métrica
         
         for am in athlete_metrics:
             metric_data = am['metric']
             metric_id = metric_data['id']
             
-            # Se ainda não existe no dicionário, criar entrada
-            if metric_id not in metrics_dict:
-                metrics_dict[metric_id] = {
-                    'id': metric_id,
-                    'id_formula': metric_data.get('id_formula'),
-                    'id_coach': metric_data.get('id_coach'),
-                    'id_sport': metric_data.get('id_sport'),
-                    'ids_metrics': metric_data.get('ids_metrics'),
-                    'name': metric_data['name'],
-                    'description': metric_data.get('description'),
-                    'aggregated': metric_data['aggregated'],
-                    'value': None,
-                    'created_at': metric_data['created_at']
-                }
-                metric_values[metric_id] = []
-            
-            # Adicionar valor à lista
-            value = am.get('value')
-            if value is not None:
-                metric_values[metric_id].append(float(value))
-        
-        # Somar valores para métricas não agregadas
-        for metric_id, metric in metrics_dict.items():
-            if not metric['aggregated']:
-                # Somar todos os valores da métrica
-                if metric_values[metric_id]:
-                    metric['value'] = sum(metric_values[metric_id])
+            # Cada métrica deve ter apenas uma entrada por atleta
+            metrics_dict[metric_id] = {
+                'id': metric_id,
+                'athlete_metric_id': am['id'],  # ID do registro em athlete_has_metric para updates
+                'id_formula': metric_data.get('id_formula'),
+                'id_coach': metric_data.get('id_coach'),
+                'id_sport': metric_data.get('id_sport'),
+                'ids_metrics': metric_data.get('ids_metrics'),
+                'name': metric_data['name'],
+                'description': metric_data.get('description'),
+                'aggregated': metric_data['aggregated'],
+                'value': am.get('value'),
+                'created_at': metric_data['created_at']
+            }
         
         # Calcular valores agregados
         for metric_id, metric in metrics_dict.items():
@@ -135,7 +121,7 @@ class MetricController:
                         )
                         
                         if all_valid:
-                            # Aplicar fórmula aos valores somados
+                            # Aplicar fórmula aos valores diretos (não somados)
                             formula_id = str(metric['id_formula'])
                             if formula_id in FORMULAS:
                                 try:
