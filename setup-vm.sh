@@ -12,12 +12,28 @@ echo ""
 echo "[1/7] Verificando Docker..."
 if ! command -v docker &> /dev/null; then
     echo "      Instalando Docker..."
+    
+    # Remover instalacoes antigas
+    sudo apt-get remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
+    
+    # Atualizar repositorios
     sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get install -y ca-certificates curl gnupg lsb-release
+    
+    # Adicionar chave GPG oficial do Docker
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    
+    # Configurar repositorio
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Instalar Docker Engine
     sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
     echo "      Docker instalado com sucesso!"
 else
     echo "      Docker ja esta instalado"
@@ -25,8 +41,8 @@ fi
 
 # 2. Verificar se Docker Compose esta instalado
 echo "[2/7] Verificando Docker Compose..."
-if ! command -v docker-compose &> /dev/null; then
-    echo "      Instalando Docker Compose..."
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    echo "      Instalando Docker Compose (standalone)..."
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
     echo "      Docker Compose instalado com sucesso!"
