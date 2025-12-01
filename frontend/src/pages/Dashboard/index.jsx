@@ -20,6 +20,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
   BarChart,
   Bar,
@@ -39,7 +40,6 @@ import api from '../../api';
 import AddMetricModal from '../../components/AddMetricModal';
 import EditMetricModal from '../../components/EditMetricModal';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
-import AddAthleteMetricValueModal from '../../components/AddAthleteMetricValueModal';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
@@ -48,12 +48,12 @@ export default function Dashboard() {
   const [selectedAthlete, setSelectedAthlete] = useState('');
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
   // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [addValueModalOpen, setAddValueModalOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -136,16 +136,107 @@ export default function Dashboard() {
     }
   };
 
-  const handleAddValue = () => {
-    setAddValueModalOpen(true);
+  const handleIncrementMetric = async (metric) => {
+    try {
+      const newValue = (metric.value || 0) + 1;
+      
+      // Update locally first for immediate feedback
+      setMetrics(prevMetrics => 
+        prevMetrics.map(m => 
+          m.id === metric.id 
+            ? { ...m, value: newValue }
+            : m
+        )
+      );
+      
+      // Update in backend
+      await api.put(`/athlete-metrics/${metric.athlete_metric_id}`, {
+        id_metric: metric.id,
+        id_athlete: selectedAthlete,
+        value: newValue,
+        created_by: 'system'
+      });
+      
+      // Recalculate aggregated metrics while preserving order
+      const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
+      const updatedMetricsMap = response.data.reduce((acc, m) => {
+        acc[m.id] = m;
+        return acc;
+      }, {});
+      
+      setMetrics(prevMetrics => 
+        prevMetrics.map(m => updatedMetricsMap[m.id] || m)
+      );
+    } catch (error) {
+      console.error('Error incrementing metric:', error);
+      // Reload on error to ensure consistency
+      await handleMetricSuccess();
+    }
   };
 
-  const handleValueSuccess = async () => {
-    // Reload metrics after adding a value
-    if (selectedAthlete) {
+  const handleDecrementMetric = async (metric) => {
+    try {
+      const newValue = Math.max(0, (metric.value || 0) - 1);
+      
+      // Update locally first for immediate feedback
+      setMetrics(prevMetrics => 
+        prevMetrics.map(m => 
+          m.id === metric.id 
+            ? { ...m, value: newValue }
+            : m
+        )
+      );
+      
+      // Update in backend
+      await api.put(`/athlete-metrics/${metric.athlete_metric_id}`, {
+        id_metric: metric.id,
+        id_athlete: selectedAthlete,
+        value: newValue,
+        created_by: 'system'
+      });
+      
+      // Recalculate aggregated metrics while preserving order
       const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
-      setMetrics(response.data);
+      const updatedMetricsMap = response.data.reduce((acc, m) => {
+        acc[m.id] = m;
+        return acc;
+      }, {});
+      
+      setMetrics(prevMetrics => 
+        prevMetrics.map(m => updatedMetricsMap[m.id] || m)
+      );
+    } catch (error) {
+      console.error('Error decrementing metric:', error);
+      // Reload on error to ensure consistency
+      await handleMetricSuccess();
     }
+  };
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    // Reorder array while dragging for immediate visual feedback
+    setMetrics(prevMetrics => {
+      const newMetrics = [...prevMetrics];
+      const draggedItem = newMetrics[draggedIndex];
+      newMetrics.splice(draggedIndex, 1);
+      newMetrics.splice(index, 0, draggedItem);
+      return newMetrics;
+    });
+    
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
   };
 
   // Separate aggregated and non-aggregated metrics
@@ -225,22 +316,26 @@ export default function Dashboard() {
               <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#000000' }}>
                 Metrics
               </Typography>
-              <Button 
-                variant="contained" 
-                startIcon={<AddIcon />}
-                onClick={handleAddValue}
-                sx={{ 
-                  textTransform: 'none',
-                  bgcolor: 'success.main',
-                  '&:hover': { bgcolor: 'success.dark' }
-                }}
-              >
-                Add Value for Athlete
-              </Button>
             </Box>
             <Grid container spacing={3}>
               {metrics.map((metric, index) => (
-                <Grid item xs={12} sm={6} md={4} key={metric.id}>
+                <Grid 
+                  item 
+                  xs={12} 
+                  sm={6} 
+                  md={4} 
+                  key={metric.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  sx={{ 
+                    cursor: 'grab',
+                    '&:active': { cursor: 'grabbing' },
+                    opacity: draggedIndex === index ? 0.5 : 1,
+                    transition: 'opacity 0.2s'
+                  }}
+                >
                   <Card sx={{ 
                     height: '100%',
                     background: metric.aggregated 
@@ -254,18 +349,27 @@ export default function Dashboard() {
                   }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box sx={{ flex: 1 }}>
-                          {metric.aggregated && (
-                            <Chip 
-                              label="Aggregated" 
-                              size="small" 
-                              sx={{ mb: 1 }}
-                              color="primary"
-                            />
-                          )}
-                          <Typography variant="h6" component="div" gutterBottom>
-                            {metric.name}
-                          </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                          <DragIndicatorIcon 
+                            sx={{ 
+                              color: 'grey.400', 
+                              cursor: 'grab',
+                              '&:active': { cursor: 'grabbing' }
+                            }} 
+                          />
+                          <Box sx={{ flex: 1 }}>
+                            {metric.aggregated && (
+                              <Chip 
+                                label="Aggregated" 
+                                size="small" 
+                                sx={{ mb: 1 }}
+                                color="primary"
+                              />
+                            )}
+                            <Typography variant="h6" component="div" gutterBottom>
+                              {metric.name}
+                            </Typography>
+                          </Box>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <IconButton 
@@ -297,16 +401,52 @@ export default function Dashboard() {
                           {metric.description}
                         </Typography>
                       )}
-                      <Typography 
-                        variant={metric.aggregated ? "h3" : "h4"} 
-                        component="div" 
-                        sx={{ 
-                          fontWeight: 'bold',
-                          color: metric.aggregated ? COLORS[index % COLORS.length] : 'inherit'
-                        }}
-                      >
-                        {metric.value !== null ? (metric.aggregated ? metric.value.toFixed(2) : metric.value) : 'N/A'}
-                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2 }}>
+                        <Typography 
+                          variant={metric.aggregated ? "h3" : "h4"} 
+                          component="div" 
+                          sx={{ 
+                            fontWeight: 'bold',
+                            color: metric.aggregated ? COLORS[index % COLORS.length] : 'inherit'
+                          }}
+                        >
+                          {metric.value !== null ? (metric.aggregated ? metric.value.toFixed(2) : metric.value) : 'N/A'}
+                        </Typography>
+                        
+                        {!metric.aggregated && (
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleDecrementMetric(metric)}
+                              disabled={metric.value === null || metric.value <= 0}
+                              sx={{
+                                bgcolor: 'error.light',
+                                color: 'white',
+                                width: 40,
+                                height: 40,
+                                '&:hover': { bgcolor: 'error.main' },
+                                '&:disabled': { bgcolor: 'grey.300', color: 'grey.500' }
+                              }}
+                            >
+                              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>−</Typography>
+                            </IconButton>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleIncrementMetric(metric)}
+                              sx={{
+                                bgcolor: 'success.light',
+                                color: 'white',
+                                width: 40,
+                                height: 40,
+                                '&:hover': { bgcolor: 'success.main' }
+                              }}
+                            >
+                              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>+</Typography>
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -431,13 +571,6 @@ export default function Dashboard() {
         }}
         onSuccess={handleMetricSuccess}
         metric={selectedMetric}
-      />
-
-      <AddAthleteMetricValueModal
-        open={addValueModalOpen}
-        onClose={() => setAddValueModalOpen(false)}
-        athleteId={selectedAthlete}
-        onSuccess={handleValueSuccess}
       />
 
       <DeleteConfirmationModal

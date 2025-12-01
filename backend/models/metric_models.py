@@ -41,8 +41,12 @@ class AthleteMetricBase(BaseModel):
 class AthleteMetricCreate(AthleteMetricBase, Create):
     pass
 
-class AthleteMetricUpdate(AthleteMetricBase, Update):
-    pass
+class AthleteMetricUpdate(BaseModel):
+    id_metric: int
+    id_athlete: int
+    value: Optional[float] = None
+    updated_at: Optional[str] = None
+    updated_by: Optional[str] = None
 
 class AthleteMetric(AthleteMetricBase, Response):
     pass
