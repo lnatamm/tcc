@@ -40,6 +40,7 @@ import api from '../../api';
 import AddMetricModal from '../../components/AddMetricModal';
 import EditMetricModal from '../../components/EditMetricModal';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import AssignMetricToAthleteModal from '../../components/AssignMetricToAthleteModal';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
@@ -54,6 +55,7 @@ export default function Dashboard() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [assignMetricModalOpen, setAssignMetricModalOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -94,9 +96,12 @@ export default function Dashboard() {
   const handleAthleteChange = (event) => {
     setSelectedAthlete(event.target.value);
   };
-
   const handleAddMetric = () => {
     setAddModalOpen(true);
+  };
+
+  const handleAssignMetric = () => {
+    setAssignMetricModalOpen(true);
   };
 
   const handleEditMetric = (metric) => {
@@ -266,8 +271,8 @@ export default function Dashboard() {
           </Typography>
         </Box>
 
-      {/* Athlete Selector with Add Metric Button */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+        {/* Athlete Selector with Add Metric Button */}
+        <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <FormControl fullWidth>
             <InputLabel id="athlete-select-label">Select an Athlete</InputLabel>
@@ -286,16 +291,29 @@ export default function Dashboard() {
             </Select>
           </FormControl>
           <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAssignMetric}
+            disabled={!selectedAthlete}
+            sx={{ 
+              textTransform: 'none',
+              whiteSpace: 'nowrap',
+              minWidth: '180px'
+            }}
+          >
+            Assign Metric
+          </Button>
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddMetric}
             sx={{ 
               textTransform: 'none',
               whiteSpace: 'nowrap',
-              minWidth: '220px'
+              minWidth: '180px'
             }}
           >
-            Add Metric (System-wide)
+            Create Metric
           </Button>
         </Box>
       </Paper>
@@ -584,6 +602,13 @@ export default function Dashboard() {
         message="Are you sure you want to delete this metric?"
         itemName={selectedMetric?.name}
         loading={deleteLoading}
+      />
+
+      <AssignMetricToAthleteModal
+        open={assignMetricModalOpen}
+        onClose={() => setAssignMetricModalOpen(false)}
+        onSuccess={handleMetricSuccess}
+        athlete={athletes.find(a => a.id === selectedAthlete)}
       />
     </Box>
   );
