@@ -78,7 +78,7 @@ const Home = () => {
         <button className="action-card" onClick={() => navigate('/routines')}>Routines</button>
         <button className="action-card">Sports</button>
         <button className="action-card">Exercises</button>
-        <button className="action-card">Dashboard</button>
+        <button className="action-card" onClick={() => navigate('/dashboard')}>Dashboard</button>
       </div>
 
       <div className="teams-section">
