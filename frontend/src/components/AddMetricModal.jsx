@@ -16,8 +16,11 @@ import {
   Typography,
   Chip,
   Alert,
-  CircularProgress
+  CircularProgress,
+  IconButton
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../api';
 import CoachSelector from './CoachSelector';
 import SportSelector from './SportSelector';
@@ -83,7 +86,14 @@ export default function AddMetricModal({ open, onClose, onSuccess }) {
       setFormData(prev => ({ ...prev, ids_metrics: [] }));
       const selectedFormula = formulas.find(f => f.id === value);
       const maxArgs = selectedFormula?.max_arguments || 0;
-      setMetricSelections(Array(maxArgs).fill(''));
+      
+      // If max_arguments is -1 (unlimited), start with 2 empty slots
+      // Otherwise, create exactly maxArgs slots
+      if (maxArgs === -1) {
+        setMetricSelections(['', '']);
+      } else {
+        setMetricSelections(Array(maxArgs).fill(''));
+      }
     }
 
     // If aggregated is unchecked, clear formula and metrics
@@ -121,8 +131,10 @@ export default function AddMetricModal({ open, onClose, onSuccess }) {
           const filledMetrics = metricSelections.filter(m => m !== '');
           if (filledMetrics.length === 0) {
             newErrors.ids_metrics = 'Select at least one metric';
-          } else if (selectedFormula.max_arguments && filledMetrics.length < selectedFormula.max_arguments) {
+          } else if (selectedFormula.max_arguments > 0 && filledMetrics.length < selectedFormula.max_arguments) {
             newErrors.ids_metrics = `This formula requires exactly ${selectedFormula.max_arguments} metrics`;
+          } else if (selectedFormula.max_arguments === -1 && filledMetrics.length < 2) {
+            newErrors.ids_metrics = 'Select at least 2 metrics';
           }
         }
       }
@@ -192,7 +204,17 @@ export default function AddMetricModal({ open, onClose, onSuccess }) {
     }
   };
 
+  const handleAddMetricSlot = () => {
+    setMetricSelections([...metricSelections, '']);
+  };
+
+  const handleRemoveMetricSlot = (index) => {
+    const newSelections = metricSelections.filter((_, i) => i !== index);
+    setMetricSelections(newSelections);
+  };
+
   const selectedFormula = formulas.find(f => f.id === formData.id_formula);
+  const isUnlimitedArgs = selectedFormula?.max_arguments === -1;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -291,53 +313,86 @@ export default function AddMetricModal({ open, onClose, onSuccess }) {
                   <Typography variant="body2">
                     {selectedFormula.description}
                   </Typography>
-                  {selectedFormula.max_arguments && (
-                    <Typography variant="caption">
-                      Maximum arguments: {selectedFormula.max_arguments}
-                    </Typography>
-                  )}
+                  <Typography variant="caption">
+                    {selectedFormula.max_arguments === -1 
+                      ? 'Unlimited arguments (minimum 2 metrics required)'
+                      : `Required arguments: ${selectedFormula.max_arguments}`
+                    }
+                  </Typography>
                 </Alert>
               )}
 
               {formData.id_formula && selectedFormula && (
                 <Box>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                    Select the metrics in operation order:
-                  </Typography>
-                  {metricSelections.map((selection, index) => (
-                    <FormControl 
-                      key={index} 
-                      fullWidth 
-                      sx={{ mb: 2 }}
-                      error={!!errors.ids_metrics}
-                    >
-                      <InputLabel>
-                        {selectedFormula.name === 'Division' && index === 0 && 'Numerator (Metric 1)'}
-                        {selectedFormula.name === 'Division' && index === 1 && 'Denominator (Metric 2)'}
-                        {selectedFormula.name !== 'Division' && `Metric ${index + 1}`}
-                      </InputLabel>
-                      <Select
-                        value={selection}
-                        label={
-                          selectedFormula.name === 'Division' && index === 0 ? 'Numerator (Metric 1)' :
-                          selectedFormula.name === 'Division' && index === 1 ? 'Denominator (Metric 2)' :
-                          `Metric ${index + 1}`
-                        }
-                        onChange={(e) => handleMetricSelectionChange(index, e.target.value)}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                      Select the metrics in operation order:
+                    </Typography>
+                    {isUnlimitedArgs && (
+                      <Button
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={handleAddMetricSlot}
+                        variant="outlined"
                       >
-                        <MenuItem value="">
-                          <em>Select a metric</em>
-                        </MenuItem>
-                        {availableMetrics
-                          .filter(m => !metricSelections.includes(m.id) || m.id === selection)
-                          .map((metric) => (
-                            <MenuItem key={metric.id} value={metric.id}>
-                              {metric.name} (Value: {metric.value || 'N/A'})
-                            </MenuItem>
-                          ))}
-                      </Select>
-                    </FormControl>
+                        Add Metric
+                      </Button>
+                    )}
+                  </Box>
+                  
+                  {metricSelections.map((selection, index) => (
+                    <Box 
+                      key={index} 
+                      sx={{ 
+                        display: 'flex', 
+                        gap: 1, 
+                        mb: 2,
+                        alignItems: 'flex-start'
+                      }}
+                    >
+                      <FormControl 
+                        fullWidth 
+                        error={!!errors.ids_metrics}
+                      >
+                        <InputLabel>
+                          {selectedFormula.name === 'Division' && index === 0 && 'Numerator (Metric 1)'}
+                          {selectedFormula.name === 'Division' && index === 1 && 'Denominator (Metric 2)'}
+                          {selectedFormula.name !== 'Division' && `Metric ${index + 1}`}
+                        </InputLabel>
+                        <Select
+                          value={selection}
+                          label={
+                            selectedFormula.name === 'Division' && index === 0 ? 'Numerator (Metric 1)' :
+                            selectedFormula.name === 'Division' && index === 1 ? 'Denominator (Metric 2)' :
+                            `Metric ${index + 1}`
+                          }
+                          onChange={(e) => handleMetricSelectionChange(index, e.target.value)}
+                        >
+                          <MenuItem value="">
+                            <em>Select a metric</em>
+                          </MenuItem>
+                          {availableMetrics
+                            .filter(m => !metricSelections.includes(m.id) || m.id === selection)
+                            .map((metric) => (
+                              <MenuItem key={metric.id} value={metric.id}>
+                                {metric.name} (Value: {metric.value || 'N/A'})
+                              </MenuItem>
+                            ))}
+                        </Select>
+                      </FormControl>
+                      
+                      {isUnlimitedArgs && metricSelections.length > 2 && (
+                        <IconButton
+                          color="error"
+                          onClick={() => handleRemoveMetricSlot(index)}
+                          sx={{ mt: 1 }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </Box>
                   ))}
+                  
                   {errors.ids_metrics && (
                     <Alert severity="error" sx={{ mt: 1 }}>
                       {errors.ids_metrics}
