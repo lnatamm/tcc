@@ -2,10 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import TodayRoutines from './pages/TodayRoutines';
-import RoutinesPage from './pages/RoutinesPage';
-import Dashboard from './pages/Dashboard';
+import Home from './pages/Home/index';
+import TodayRoutines from './pages/TodayRoutines/index';
+import RoutinesPage from './pages/RoutinesPage/index';
+import Dashboard from './pages/Dashboard/index';
 
 const App = () => {
   return (
