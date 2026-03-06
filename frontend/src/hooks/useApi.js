@@ -41,13 +41,15 @@ export const useTeamsWithAthletes = () => {
   return useQuery({
     queryKey: ['teams-with-athletes'],
     queryFn: async () => {
-      if (!teams) return [];
+      if (!teams || !Array.isArray(teams)) return [];
       
       const teamsWithAthletes = await Promise.all(
         teams.map(async (team) => {
           try {
             const enrollments = await enrollmentService.getByTeam(team.id);
-            const athletes = enrollments.map(m => m.athlete).filter(Boolean);
+            const athletes = Array.isArray(enrollments) 
+              ? enrollments.map(m => m.athlete).filter(Boolean)
+              : [];
             return { ...team, athletes };
           } catch (err) {
             console.error(`Error to load athletes of team ${team.id}:`, err);
@@ -58,7 +60,7 @@ export const useTeamsWithAthletes = () => {
       
       return teamsWithAthletes;
     },
-    enabled: !!teams,
+    enabled: !!teams && Array.isArray(teams),
     ...queryInfo,
   });
 };
@@ -487,5 +489,79 @@ export const useTypeExercise = (id) => {
     queryKey: ['type-exercise', id],
     queryFn: () => typeExerciseService.getById(id),
     enabled: !!id,
+  });
+};
+
+// ============= EXERCISE STATS =============
+
+export const useTodayExercises = (athleteId) => {
+  return useQuery({
+    queryKey: ['today-exercises', athleteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/exercise-stats/today/${athleteId}`);
+      if (!response.ok) throw new Error('Failed to fetch today exercises');
+      return response.json();
+    },
+    enabled: !!athleteId,
+    refetchInterval: 2000, // Refetch every 2 seconds for real-time updates
+  });
+};
+
+export const useStartExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await fetch('/api/exercise-stats/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to start exercise');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+      queryClient.refetchQueries({ queryKey: ['today-exercises'] });
+    },
+  });
+};
+
+export const useUpdateExerciseProgress = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ exerciseStatsId, data }) => {
+      const response = await fetch(`/api/exercise-stats/${exerciseStatsId}/progress`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update exercise progress');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+    },
+  });
+};
+
+export const useEndExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ exerciseHistoryId, data }) => {
+      const response = await fetch(`/api/exercise-stats/history/${exerciseHistoryId}/end`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to end exercise');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+      queryClient.refetchQueries({ queryKey: ['today-exercises'] });
+    },
   });
 };

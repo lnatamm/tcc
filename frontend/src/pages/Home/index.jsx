@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './style.css';
 import {useTeamsWithAthletes } from '../../hooks/useApi';
 import AddTeamModal from '../../components/AddTeamModal';
@@ -13,6 +14,7 @@ const Home = () => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [athletePhotos, setAthletePhotos] = useState({});
   const { data: teams = [], isLoading: loading, error } = useTeamsWithAthletes();
+  const navigate = useNavigate();
   
   const userName = "Derek";
 
@@ -73,10 +75,10 @@ const Home = () => {
       </div>
 
       <div className="quick-actions">
-        <button className="action-card">Routines</button>
-        <button className="action-card">Oto canto</button>
-        <button className="action-card">Oto canto</button>
-        <button className="action-card">Oto canto</button>
+        <button className="action-card" onClick={() => navigate('/routines')}>Routines</button>
+        <button className="action-card">Sports</button>
+        <button className="action-card">Exercises</button>
+        <button className="action-card">Dashboard</button>
       </div>
 
       <div className="teams-section">

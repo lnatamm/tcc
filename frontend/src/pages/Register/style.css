@@ -1,0 +1,131 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url(/src/assets/Background.png) no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.register-card {
+  background: white;
+  border-radius: 8px;
+  padding: 60px 50px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.register-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.register-logo img {
+  height: 40px;
+  width: auto;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  padding: 14px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #e8e8e8;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  background-color: #d8d8d8;
+}
+
+.form-group input::placeholder {
+  color: #999;
+}
+
+.register-button {
+  padding: 14px 20px;
+  background-color: #1976d2;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  margin-top: 10px;
+}
+
+.register-button:hover {
+  background-color: #1560ac;
+}
+
+.register-button:active {
+  transform: scale(0.98);
+}
+
+.register-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.register-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.register-footer a {
+  font-size: 14px;
+  color: #666;
+  text-decoration: none;
+  border-bottom: 1px solid #666;
+  transition: color 0.3s ease;
+}
+
+.register-footer a:hover {
+  color: #333;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  border: 1px solid #c3e6cb;
+}

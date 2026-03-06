@@ -16,6 +16,8 @@ from routes.exercise_routes import api_exercises
 from routes.enrollment_routes import api_enrollments
 from routes.routine_routes import api_routines
 from routes.type_exercise_routes import api_type_exercises
+from routes.exercise_stats_routes import router as exercise_stats_router
+from routes.auth_routes import router as auth_router
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
@@ -44,6 +46,8 @@ api.include_router(api_exercises)
 api.include_router(api_enrollments)
 api.include_router(api_routines)
 api.include_router(api_type_exercises)
+api.include_router(exercise_stats_router)
+api.include_router(auth_router)
 
 app.include_router(api)
 

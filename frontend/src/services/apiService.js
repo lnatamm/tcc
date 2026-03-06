@@ -297,3 +297,38 @@ export const typeExerciseService = {
     return response.data;
   },
 };
+
+// Auth
+export const authService = {
+  login: async (usuario, senha) => {
+    const response = await api.post('/auth/login', {
+      usuario,
+      senha
+    });
+    return response;
+  },
+
+  register: async (usuario, email, nome, senha) => {
+    const response = await api.post('/auth/register', {
+      usuario,
+      email,
+      nome,
+      senha
+    });
+    return response;
+  },
+
+  logout: async () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+
+  getCurrentUser: () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  },
+
+  isAuthenticated: () => {
+    return localStorage.getItem('token') !== null;
+  }
+};

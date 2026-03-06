@@ -356,7 +356,7 @@ class SupabaseIntegration:
     
     def get_exercises_by_routine_id(self, routine_id: int):
         """Returns all exercises in a routine with their schedule"""
-        return self.client.table('routine_has_exercice').select('*, exercise(*)').eq('id_routine', routine_id).order('start_hour').execute()
+        return self.client.table('routine_has_exercise').select('*, exercise(*)').eq('id_routine', routine_id).order('start_hour').execute()
     
     def create_routine(self, routine: RoutineCreate):
         """Creates a new routine"""
@@ -395,11 +395,11 @@ class SupabaseIntegration:
             "created_at": routine_exercise.created_at,
             "created_by": routine_exercise.created_by
         }
-        return self.client.table('routine_has_exercice').insert(data).execute()
+        return self.client.table('routine_has_exercise').insert(data).execute()
     
     def remove_exercise_from_routine(self, routine_exercise_id: int):
         """Removes an exercise from a routine"""
-        return self.client.table('routine_has_exercice').delete().eq('id', routine_exercise_id).execute()
+        return self.client.table('routine_has_exercise').delete().eq('id', routine_exercise_id).execute()
     
     def add_excluded_date(self, excluded_date: ExcludedDateCreate):
         """Adds an excluded date to a routine exercise"""
