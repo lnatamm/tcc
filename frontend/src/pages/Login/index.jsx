@@ -43,7 +43,7 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page" style={{ backgroundImage: `url(${Background})` }}>
+    <div className="login-page">
       <div className="login-card">
         <img className="login-logo" src={Logo} alt="Athletrics" />
 
