@@ -49,6 +49,9 @@ const AthleteControl = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterTeam, setFilterTeam] = useState('');
   const [filterSport, setFilterSport] = useState('');
+
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
   const ITEMS_PER_PAGE = 10;
 
   const filteredAthletes = useMemo(() => {
@@ -91,6 +94,7 @@ const AthleteControl = () => {
   const totalStudents = athletes.length;
   const totalTeams = teams.length;
   const activeStudents = athletes.filter((a) => a.status === 'Ativo').length;
+
 
   const totalPages = Math.max(1, Math.ceil(filteredAthletes.length / ITEMS_PER_PAGE));
 
@@ -217,7 +221,7 @@ const AthleteControl = () => {
           </Popover>
         </div>
 
-        <button className="add-athlete-btn" onClick={() => navigate('/register')}>
+        <button type="button" className="add-athlete-btn" onClick={() => navigate('/register')}>
           Adicionar aluno
         </button>
       </section>
