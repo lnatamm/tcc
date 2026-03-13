@@ -2,23 +2,62 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Navbar from './components/Navbar';
+import Login from './pages/Login';
 import Home from './pages/Home';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
 import Dashboard from './pages/Dashboard';
+import Register from './pages/Register';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider } from './context/AuthContext';
 
 const App = () => {
   return (
     <Router>
-      <div className="App">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/routines" element={<RoutinesPage />} />
-          <Route path="/today" element={<TodayRoutines />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="App">
+          <Navbar />
+          <main className="App-content">
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/home"
+                element={
+                  <PrivateRoute>
+                    <Home />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/routines"
+                element={
+                  <PrivateRoute>
+                    <RoutinesPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/today"
+                element={
+                  <PrivateRoute>
+                    <TodayRoutines />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </main>
+        </div>
+      </AuthProvider>
     </Router>
   );
 };

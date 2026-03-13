@@ -8,6 +8,8 @@ from models.exercise_models import *
 from models.sport_models import *
 from models.team_models import *
 from models.routine_models import *
+from models.user_models import *
+from datetime import datetime
 
 class SupabaseIntegration:
     def __init__(self):
@@ -24,7 +26,32 @@ class SupabaseIntegration:
 
     def get_client(self):
         return self.client
-    
+
+    # ---------- Users ----------
+
+    def get_user_by_identifier(self, identifier: str):
+        """Find a user by usuario or email."""
+        return self.client.table('users').select('*').or_(f"usuario.eq.{identifier},email.eq.{identifier}").execute()
+
+    def create_user(self, user: UserCreate):
+        """Creates a new user."""
+        data = {
+            "usuario": user.usuario,
+            "email": user.email,
+            "nome": user.nome,
+            "senha": user.senha,
+            "tipo": user.tipo,
+            "ultimo_acesso": None,
+        }
+        return self.client.table('users').insert(data).execute()
+
+    def update_user_last_access(self, user_id: int):
+        """Updates the user's last access timestamp."""
+        now = datetime.utcnow().isoformat()
+        return self.client.table('users').update({"ultimo_acesso": now}).eq('id', user_id).execute()
+
+    # ---------- Athletes ----------
+
     def get_all_athletes(self):
         """Returns all athletes"""
         return self.client.table('athlete').select('*').order('name').execute()

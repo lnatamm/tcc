@@ -1,53 +1,70 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
-import ChatIcon from '@mui/icons-material/Chat';
-import PersonIcon from '@mui/icons-material/Person';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import PersonIcon from '@mui/icons-material/Person';
+import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  // Hide the sidebar on the login / register pages
+  if (
+    location.pathname === '/' ||
+    location.pathname === '/login' ||
+    location.pathname === '/register'
+  ) {
+    return null;
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <div className="navbar-logo"></div>
-        <div className="navbar-links">
-          <Link 
-            to="/" 
-            className={`navbar-link ${location.pathname === '/' ? 'active' : ''}`}
-          >
-            <HomeIcon sx={{ fontSize: 24 }} />
-          </Link>
-          <Link 
-            to="/today" 
-            className={`navbar-link ${location.pathname === '/today' ? 'active' : ''}`}
-          >
-            <TodayIcon sx={{ fontSize: 24 }} />
-          </Link>
-          <Link 
-            to="/dashboard" 
-            className={`navbar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
-          >
-            <DashboardIcon sx={{ fontSize: 24 }} />
-          </Link>
-          <Link 
-            to="/chat" 
-            className={`navbar-link ${location.pathname === '/chat' ? 'active' : ''}`}
-          >
-            <ChatIcon sx={{ fontSize: 24 }} />
-          </Link>
-          <Link 
-            to="/perfil" 
-            className={`navbar-link ${location.pathname === '/perfil' ? 'active' : ''}`}
-          >
-            <PersonIcon sx={{ fontSize: 24 }} />
-          </Link>
-        </div>
+    <aside className="sidebar">
+      <div className="sidebar-profile">
+        <div className="sidebar-avatar">{user?.nome ? user.nome.charAt(0).toUpperCase() : 'U'}</div>
+        <div className="sidebar-name">{user?.nome || 'Meu perfil'}</div>
       </div>
-    </nav>
+
+      <nav className="sidebar-nav">
+        <Link
+          to="/routines"
+          className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
+        >
+          <TodayIcon sx={{ fontSize: 20 }} />
+          <span>Rotinas e exercícios</span>
+        </Link>
+
+        <Link
+          to="/dashboard"
+          className={`sidebar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+        >
+          <DashboardIcon sx={{ fontSize: 20 }} />
+          <span>Dashboard</span>
+        </Link>
+
+        <Link
+          to="/home"
+          className={`sidebar-link ${location.pathname === '/home' ? 'active' : ''}`}
+        >
+          <PersonIcon sx={{ fontSize: 20 }} />
+          <span>Alunos e turmas</span>
+        </Link>
+      </nav>
+
+      <div className="sidebar-footer">
+        <button className="sidebar-logout" type="button" onClick={handleLogout}>
+          Sair da conta
+        </button>
+      </div>
+    </aside>
   );
 };
 

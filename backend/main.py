@@ -3,11 +3,14 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Carregar variáveis de ambiente
-load_dotenv()
+# Carregar variáveis de ambiente (sempre usando o .env dentro da pasta backend)
+dotenv_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path)
 
+from routes.auth_routes import api_auth
 from routes.athlete_routes import api_athletes
 from routes.team_routes import api_teams
 from routes.coach_routes import api_coaches
@@ -47,6 +50,7 @@ app.add_middleware(
 )
 
 # Include routers
+api.include_router(api_auth)
 api.include_router(api_athletes)
 api.include_router(api_teams)
 api.include_router(api_coaches)
