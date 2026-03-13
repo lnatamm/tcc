@@ -7,6 +7,8 @@
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
   border-right: 1px solid rgba(0, 0, 0, 0.04);
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
   display: flex;
   flex-direction: column;
   padding: 2rem 1.25rem;
@@ -55,7 +57,7 @@
   align-items: center;
   gap: 0.85rem;
   padding: 0.75rem 1.1rem;
-  border-radius: 14px;
+  border-radius: 10px;
   text-decoration: none;
   color: rgba(35, 35, 35, 0.85);
   font-weight: 600;
@@ -65,11 +67,12 @@
 .sidebar-link:hover {
   background: rgba(102, 126, 234, 0.1);
   transform: translateX(2px);
+  color: #1d1d1d;
 }
 
 .sidebar-link.active {
-  background: rgba(102, 126, 234, 0.2);
-  color: rgba(35, 35, 35, 1);
+  background: #1976D2;
+  color: #ffffff;
 }
 
 .sidebar-footer {
@@ -78,16 +81,17 @@
 
 .sidebar-logout {
   width: 100%;
-  border: 1px solid rgba(239, 68, 68, 0.8);
-  background: rgba(239, 68, 68, 0.08);
-  color: rgba(239, 68, 68, 0.95);
+  border: 1px solid #ef4444;
+  color: #ef4444;
   font-weight: 700;
   padding: 0.75rem 1rem;
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 160ms ease;
 }
 
 .sidebar-logout:hover {
-  background: rgba(239, 68, 68, 0.16);
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
 }

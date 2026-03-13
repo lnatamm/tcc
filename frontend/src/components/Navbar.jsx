@@ -4,6 +4,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
@@ -40,6 +41,14 @@ const Navbar = () => {
         >
           <TodayIcon sx={{ fontSize: 20 }} />
           <span>Rotinas e exercícios</span>
+        </Link>
+
+        <Link
+          to="/today"
+          className={`sidebar-link ${location.pathname === '/today' ? 'active' : ''}`}
+        >
+          <CalendarTodayIcon sx={{ fontSize: 20 }} />
+          <span>Hoje</span>
         </Link>
 
         <Link
