@@ -36,6 +36,14 @@ const Navbar = () => {
 
       <nav className="sidebar-nav">
         <Link
+          to="/home"
+          className={`sidebar-link ${location.pathname === '/home' ? 'active' : ''}`}
+        >
+          <HomeIcon sx={{ fontSize: 20 }} />
+          <span>Home</span>
+        </Link>
+
+        <Link
           to="/routines"
           className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
         >
@@ -60,8 +68,8 @@ const Navbar = () => {
         </Link>
 
         <Link
-          to="/home"
-          className={`sidebar-link ${location.pathname === '/home' ? 'active' : ''}`}
+          to="/athlete-control"
+          className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
         >
           <PersonIcon sx={{ fontSize: 20 }} />
           <span>Alunos e turmas</span>

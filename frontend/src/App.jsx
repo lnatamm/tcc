@@ -4,6 +4,7 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import AthleteControl from './pages/AthleteControl';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
 import Dashboard from './pages/Dashboard';
@@ -27,6 +28,14 @@ const App = () => {
                 element={
                   <PrivateRoute>
                     <Home />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/athlete-control"
+                element={
+                  <PrivateRoute>
+                    <AthleteControl />
                   </PrivateRoute>
                 }
               />
