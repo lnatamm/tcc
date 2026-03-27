@@ -8,7 +8,8 @@ import {
   routineService,
   exerciseService,
   typeExerciseService,
-  physicalTestService
+  physicalTestService,
+  eventService
 } from '../services/apiService';
 
 // ============= TEAMS ============
@@ -494,6 +495,25 @@ export const useDeletePhysicalTest = () => {
     mutationFn: ({ physicalTestId, athleteId }) => physicalTestService.delete(physicalTestId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['physical-tests', 'athlete', variables.athleteId] });
+    },
+  });
+};
+
+// ============= EVENTS =============
+
+export const useEvents = () => {
+  return useQuery({
+    queryKey: ['events'],
+    queryFn: eventService.getAll,
+  });
+};
+
+export const useCreateEvent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: eventService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
 };

@@ -8,6 +8,7 @@ from models.exercise_models import *
 from models.sport_models import *
 from models.team_models import *
 from models.routine_models import *
+from models.event_models import *
 from models.user_models import *
 from datetime import datetime
 
@@ -496,6 +497,60 @@ class SupabaseIntegration:
         if not rows:
             return self.client.table('physical_test_has_exercise').insert([]).execute()
         return self.client.table('physical_test_has_exercise').insert(rows).execute()
+
+    # ============= EVENTS =============
+
+    def get_all_events(self):
+        """Returns all events"""
+        return self.client.table('event').select('*').order('start_date').execute()
+
+    def create_event(self, event: EventCreate):
+        """Creates a new event"""
+        data = {
+            "name": event.name,
+            "description": event.description,
+            "start_date": event.start_date,
+            "created_at": event.created_at,
+            "created_by": event.created_by,
+        }
+        return self.client.table('event').insert(data).execute()
+
+    def delete_event(self, event_id: int):
+        """Deletes an event"""
+        return self.client.table('event').delete().eq('id', event_id).execute()
+
+    def add_teams_to_event_bulk(
+        self,
+        event_id: int,
+        team_ids: list[int],
+        created_at_iso: str,
+        created_by: str,
+    ):
+        """Adds multiple teams to an event."""
+        rows = [
+            {
+                "id_event": event_id,
+                "id_team": team_id,
+                "created_at": created_at_iso,
+                "created_by": created_by,
+            }
+            for team_id in team_ids
+        ]
+        if not rows:
+            return self.client.table('team_has_event').insert([]).execute()
+        return self.client.table('team_has_event').insert(rows).execute()
+
+    def get_team_links_by_event_ids(self, event_ids: list[int]):
+        """Returns event-team links with team details."""
+        if not event_ids:
+            return self.client.table('team_has_event').select('id_event, id_team, team(id, name)').limit(0).execute()
+
+        return (
+            self.client.table('team_has_event')
+            .select('id_event, id_team, team(id, name)')
+            .in_('id_event', event_ids)
+            .execute()
+        )
     
     def add_exercise_to_routine(self, routine_exercise: RoutineHasExerciseCreate):
         """Adds an exercise to a routine"""

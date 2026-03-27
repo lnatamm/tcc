@@ -19,6 +19,7 @@ from routes.exercise_routes import api_exercises
 from routes.enrollment_routes import api_enrollments
 from routes.routine_routes import api_routines
 from routes.physical_test_routes import api_physical_tests
+from routes.event_routes import api_events
 from routes.type_exercise_routes import api_type_exercises
 from routes.exercise_stats_routes import router as exercise_stats_router
 from routes.metric_routes import router as metric_router
@@ -60,6 +61,7 @@ api.include_router(api_exercises)
 api.include_router(api_enrollments)
 api.include_router(api_routines)
 api.include_router(api_physical_tests)
+api.include_router(api_events)
 api.include_router(api_type_exercises)
 api.include_router(exercise_stats_router)
 api.include_router(metric_router)

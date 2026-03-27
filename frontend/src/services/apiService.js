@@ -331,6 +331,22 @@ export const physicalTestService = {
   },
 };
 
+// Events
+export const eventService = {
+  getAll: async () => {
+    const response = await api.get('/events/');
+    return response.data;
+  },
+
+  create: async (eventData) => {
+    const { created_by, ...data } = eventData;
+    const response = await api.post('/events/', data, {
+      params: { user: created_by },
+    });
+    return response.data;
+  },
+};
+
 // Type Exercises
 export const typeExerciseService = {
   getAll: async () => {

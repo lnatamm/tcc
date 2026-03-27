@@ -6,6 +6,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
+import EventIcon from '@mui/icons-material/Event';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
@@ -74,6 +75,14 @@ const Navbar = () => {
         >
           <FactCheckIcon sx={{ fontSize: 20 }} />
           <span>Testes Físicos</span>
+        </Link>
+
+        <Link
+          to="/events"
+          className={`sidebar-link ${location.pathname === '/events' ? 'active' : ''}`}
+        >
+          <EventIcon sx={{ fontSize: 20 }} />
+          <span>Eventos</span>
         </Link>
 
         <Link
