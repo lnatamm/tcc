@@ -39,6 +39,7 @@ import NotesIcon from '@mui/icons-material/Notes';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useRoutinesByAthlete, useRoutineExercises, useCreateRoutine } from '../hooks/useApi';
 import AddExerciseToRoutineModal from './AddExerciseToRoutineModal';
+import ExerciseVideoPlayer from './ExerciseVideoPlayer';
 
 const DAYS_OF_WEEK = [
   { key: 'MONDAY', label: 'Monday', short: 'MON', index: 1 },
@@ -344,6 +345,10 @@ const ExerciseDetailsModal = ({ open, onClose, exercise, routineExercise }) => {
                 </Typography>
               </Paper>
             </Box>
+          )}
+
+          {exercise.video_path && (
+            <ExerciseVideoPlayer exerciseId={exercise.id} />
           )}
         </Box>
       </DialogContent>

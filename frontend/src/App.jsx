@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import AthleteControl from './pages/AthleteControl';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
+import PhysicalTestsPage from './pages/PhysicalTestsPage';
 import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import PrivateRoute from './components/PrivateRoute';
@@ -60,6 +61,14 @@ const App = () => {
                 element={
                   <PrivateRoute>
                     <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/physical-tests"
+                element={
+                  <PrivateRoute>
+                    <PhysicalTestsPage />
                   </PrivateRoute>
                 }
               />

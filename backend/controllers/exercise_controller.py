@@ -1,6 +1,7 @@
 from integrations.supabase_integration import SupabaseIntegration
 from utils.s3 import S3Client
 from models.exercise_models import *
+from fastapi import UploadFile
 
 class ExerciseController:
     def __init__(self):
@@ -66,6 +67,23 @@ class ExerciseController:
             content_type = 'application/octet-stream'
         
         return file_bytes, content_type
+
+    def upload_exercise_video(self, exercise_id: int, file: UploadFile):
+        """Uploads an exercise MP4 video to S3 and updates exercise.video_path."""
+        # Keep a predictable key so re-upload replaces the previous file.
+        key = f"exercises/{exercise_id}/video.mp4"
+
+        # Ensure stream pointer is at start
+        try:
+            file.file.seek(0)
+        except Exception:
+            pass
+
+        ok = self.s3.upload_file('videos', key, file.file, content_type='video/mp4')
+        if not ok:
+            raise Exception("Failed to upload video to S3")
+
+        return self.supabase_integration.update_exercise_video_path(exercise_id, key)
     
     def create_exercise(self, payload: ExerciseCreate):
         """Creates a new exercise"""

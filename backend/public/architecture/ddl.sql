@@ -101,6 +101,34 @@ CREATE TABLE "exercise"(
 );
 ALTER TABLE
     "exercise" ADD PRIMARY KEY("id");
+CREATE TABLE "event"(
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NULL,
+    "other_links" TEXT NULL,
+    "start_date" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+)
+ALTER TABLE
+    "event" ADD PRIMARY KEY("id");
+CREATE TABLE "team_has_event"(
+    "id" SERIAL NOT NULL,
+    "id_team" BIGINT NOT NULL,
+    "id_event" BIGINT NOT NULL
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "team_has_event" ADD PRIMARY KEY("id");
 CREATE TABLE "routine_has_exercise"(
     "id" SERIAL NOT NULL,
     "id_routine" BIGINT NOT NULL,
@@ -142,6 +170,35 @@ CREATE TABLE "routine"(
 );
 ALTER TABLE
     "routine" ADD PRIMARY KEY("id");
+CREATE TABLE "physical_test"(
+    "id" SERIAL NOT NULL,
+    "id_athlete" BIGINT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "physical_test" ADD PRIMARY KEY("id");
+CREATE TABLE "physical_test_has_exercise"(
+    "id" SERIAL NOT NULL,
+    "id_physical_test" BIGINT NOT NULL,
+    "id_exercise" BIGINT NOT NULL,
+    "start_date" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "end_date" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "physical_test_has_exercise" ADD PRIMARY KEY("id");
 CREATE TABLE "level"(
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
@@ -262,9 +319,19 @@ ALTER TABLE
 ALTER TABLE
     "routine" ADD CONSTRAINT "routine_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
 ALTER TABLE
+    "physical_test" ADD CONSTRAINT "physical_test_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+ALTER TABLE
     "team" ADD CONSTRAINT "team_id_coach_foreign" FOREIGN KEY("id_coach") REFERENCES "coach"("id");
 ALTER TABLE
     "routine_has_exercise" ADD CONSTRAINT "routine_has_exercise_id_exercise_foreign" FOREIGN KEY("id_exercise") REFERENCES "exercise"("id");
+ALTER TABLE
+    "physical_test_has_exercise" ADD CONSTRAINT "physical_test_has_exercise_id_physical_test_foreign" FOREIGN KEY("id_physical_test") REFERENCES "physical_test"("id");
+ALTER TABLE
+    "physical_test_has_exercise" ADD CONSTRAINT "physical_test_has_exercise_id_exercise_foreign" FOREIGN KEY("id_exercise") REFERENCES "exercise"("id");
+ALTER TABLE
+    "team_has_event" ADD CONSTRAINT "team_has_event_id_team_foreign" FOREIGN KEY("id_team") REFERENCES "team"("id");
+ALTER TABLE
+    "team_has_event" ADD CONSTRAINT "team_has_event_id_event_foreign" FOREIGN KEY("id_event") REFERENCES "event"("id");
 ALTER TABLE
     "exercise_history" ADD CONSTRAINT "exercise_history_id_exercise_stats_foreign" FOREIGN KEY("id_exercise_stats") REFERENCES "exercise_stats"("id");
 ALTER TABLE

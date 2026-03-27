@@ -261,6 +261,10 @@ class SupabaseIntegration:
             return self.client.table('exercise').select('*').eq('id', exercise_id).execute()
         
         return self.client.table('exercise').update(data).eq('id', exercise_id).execute()
+
+    def update_exercise_video_path(self, exercise_id: int, video_path: str):
+        """Updates only the exercise video_path."""
+        return self.client.table('exercise').update({"video_path": video_path}).eq('id', exercise_id).execute()
     
     def delete_exercise(self, exercise_id: int):
         """Deletes an exercise"""
@@ -410,6 +414,88 @@ class SupabaseIntegration:
     def delete_routine(self, routine_id: int):
         """Deletes a routine"""
         return self.client.table('routine').delete().eq('id', routine_id).execute()
+
+    # ============= PHYSICAL TESTS =============
+
+    def get_physical_tests_by_athlete_id(self, athlete_id: int):
+        """Returns all physical tests of an athlete"""
+        return (
+            self.client.table('physical_test')
+            .select('*, physical_test_has_exercise(start_date)')
+            .eq('id_athlete', athlete_id)
+            .order('created_at', desc=True)
+            .execute()
+        )
+
+    def get_physical_test_by_id(self, physical_test_id: int):
+        """Returns a physical test by ID"""
+        return self.client.table('physical_test').select('*').eq('id', physical_test_id).execute()
+
+    def create_physical_test(self, physical_test):
+        """Creates a new physical test"""
+        data = {
+            "id_athlete": physical_test.id_athlete,
+            "name": physical_test.name,
+            "description": physical_test.description,
+            "created_at": physical_test.created_at,
+            "created_by": physical_test.created_by,
+        }
+        return self.client.table('physical_test').insert(data).execute()
+
+    def update_physical_test(self, physical_test_id: int, physical_test_update):
+        """Updates a physical test"""
+        data = {}
+        if physical_test_update.name is not None:
+            data["name"] = physical_test_update.name
+        if physical_test_update.description is not None:
+            data["description"] = physical_test_update.description
+        if getattr(physical_test_update, 'updated_by', None) is not None:
+            data["updated_by"] = physical_test_update.updated_by
+        if getattr(physical_test_update, 'updated_at', None) is not None:
+            data["updated_at"] = physical_test_update.updated_at
+
+        if not data:
+            return self.client.table('physical_test').select('*').eq('id', physical_test_id).execute()
+
+        return self.client.table('physical_test').update(data).eq('id', physical_test_id).execute()
+
+    def delete_physical_test(self, physical_test_id: int):
+        """Deletes a physical test"""
+        return self.client.table('physical_test').delete().eq('id', physical_test_id).execute()
+
+    def get_exercises_by_physical_test_id(self, physical_test_id: int):
+        """Returns all exercises of a physical test with their scheduling window"""
+        return (
+            self.client.table('physical_test_has_exercise')
+            .select('*, exercise(*)')
+            .eq('id_physical_test', physical_test_id)
+            .order('start_date')
+            .execute()
+        )
+
+    def add_exercises_to_physical_test_bulk(
+        self,
+        physical_test_id: int,
+        exercise_ids: list[int],
+        start_date_iso: str,
+        created_at_iso: str,
+        created_by: str,
+    ):
+        """Adds multiple exercises to a physical test using the same scheduled start_date."""
+        rows = [
+            {
+                "id_physical_test": physical_test_id,
+                "id_exercise": ex_id,
+                "start_date": start_date_iso,
+                "end_date": None,
+                "created_at": created_at_iso,
+                "created_by": created_by,
+            }
+            for ex_id in exercise_ids
+        ]
+        if not rows:
+            return self.client.table('physical_test_has_exercise').insert([]).execute()
+        return self.client.table('physical_test_has_exercise').insert(rows).execute()
     
     def add_exercise_to_routine(self, routine_exercise: RoutineHasExerciseCreate):
         """Adds an exercise to a routine"""

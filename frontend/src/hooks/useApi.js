@@ -7,7 +7,8 @@ import {
   sportService,
   routineService,
   exerciseService,
-  typeExerciseService
+  typeExerciseService,
+  physicalTestService
 } from '../services/apiService';
 
 // ============= TEAMS ============
@@ -445,6 +446,54 @@ export const useDeleteRoutine = () => {
     mutationFn: routineService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['routines'] });
+    },
+  });
+};
+
+// ============= PHYSICAL TESTS =============
+
+export const usePhysicalTestsByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['physical-tests', 'athlete', athleteId],
+    queryFn: () => physicalTestService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const usePhysicalTestExercises = (physicalTestId) => {
+  return useQuery({
+    queryKey: ['physical-tests', physicalTestId, 'exercises'],
+    queryFn: () => physicalTestService.getExercises(physicalTestId),
+    enabled: !!physicalTestId,
+  });
+};
+
+export const useSchedulePhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: physicalTestService.schedule,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', 'athlete', variables.id_athlete] });
+    },
+  });
+};
+
+export const useAddExercisesToPhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ physicalTestId, payload }) => physicalTestService.addExercises(physicalTestId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', variables.physicalTestId, 'exercises'] });
+    },
+  });
+};
+
+export const useDeletePhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ physicalTestId, athleteId }) => physicalTestService.delete(physicalTestId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', 'athlete', variables.athleteId] });
     },
   });
 };

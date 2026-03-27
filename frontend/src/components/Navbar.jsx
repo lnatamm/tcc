@@ -5,6 +5,7 @@ import TodayIcon from '@mui/icons-material/Today';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
@@ -65,6 +66,14 @@ const Navbar = () => {
         >
           <DashboardIcon sx={{ fontSize: 20 }} />
           <span>Dashboard</span>
+        </Link>
+
+        <Link
+          to="/physical-tests"
+          className={`sidebar-link ${location.pathname === '/physical-tests' ? 'active' : ''}`}
+        >
+          <FactCheckIcon sx={{ fontSize: 20 }} />
+          <span>Testes Físicos</span>
         </Link>
 
         <Link
