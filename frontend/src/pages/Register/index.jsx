@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './style.css';
 import Background from '../../assets/Background.png';
 import Logo from '../../assets/Logo.png';
 import api from '../../api';
@@ -53,7 +52,7 @@ const Register = () => {
   };
 
   return (
-    <div className="login-page" style={{ backgroundImage: `url(${Background})` }}>
+    <div className="login-page">
       <div className="login-card">
         <img className="login-logo" src={Logo} alt="Athletrics" />
 

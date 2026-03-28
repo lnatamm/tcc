@@ -5,6 +5,7 @@ import { useTeamsWithAthletes, useAthletes, useEnrollments } from '../../hooks/u
 import { Avatar, IconButton, Popover, Box } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import AddAthleteModal from '../../components/AddAthleteModal';
 
 const AthleteControl = () => {
   const navigate = useNavigate();
@@ -121,6 +122,11 @@ const AthleteControl = () => {
     return pages;
   };
 
+  const handleAddAthlete = (athleteName) => {
+    setAddModalOpen(false);
+    navigate('/register', { state: { athleteName } });
+  };
+
   return (
     <div className="athlete-control">
       <div className="athlete-summary-card">
@@ -221,7 +227,11 @@ const AthleteControl = () => {
           </Popover>
         </div>
 
-        <button type="button" className="add-athlete-btn" onClick={() => navigate('/register')}>
+        <button
+          type="button"
+          className="add-athlete-btn"
+          onClick={() => setAddModalOpen(true)}
+        >
           Adicionar aluno
         </button>
       </section>
@@ -334,6 +344,12 @@ const AthleteControl = () => {
       </section>
             
     </div>
+
+      <AddAthleteModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSubmit={handleAddAthlete}
+      />
 
     </div>
   );
