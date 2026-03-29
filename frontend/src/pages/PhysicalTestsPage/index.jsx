@@ -1,23 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Container,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Switch,
-  Typography,
-} from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import './style.css';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -53,6 +35,24 @@ const getDaysDiffFromToday = (scheduledIso) => {
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 };
 
+const ITEMS_PER_PAGE = 10;
+
+const getStatusMeta = (physicalTest) => {
+  if (physicalTest.isExpired) {
+    return { label: 'Expirado', className: 'expired' };
+  }
+
+  if (typeof physicalTest.daysDiff === 'number') {
+    if (physicalTest.daysDiff === 0) {
+      return { label: 'Hoje', className: 'today' };
+    }
+
+    return { label: `Faltam ${physicalTest.daysDiff} dias`, className: 'upcoming' };
+  }
+
+  return { label: 'Sem data', className: 'unscheduled' };
+};
+
 const PhysicalTestsPage = () => {
   const { user } = useAuth();
   const userName = user?.nome || 'Derek';
@@ -62,6 +62,7 @@ const PhysicalTestsPage = () => {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: athletes = [], isLoading: loadingAthletes, error: athletesError } = useAthletes();
   const athleteId = selectedAthleteId ? Number(selectedAthleteId) : null;
@@ -84,6 +85,46 @@ const PhysicalTestsPage = () => {
     return normalizedTests.filter((t) => !t.isExpired);
   }, [athleteId, normalizedTests, showExpired]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [athleteId, showExpired, visibleTests.length]);
+
+  const selectedAthlete = useMemo(
+    () => athletes.find((athlete) => athlete.id === athleteId) || null,
+    [athleteId, athletes],
+  );
+
+  const expiredCount = normalizedTests.filter((test) => test.isExpired).length;
+  const activeCount = normalizedTests.filter((test) => !test.isExpired).length;
+  const totalPages = Math.max(1, Math.ceil(visibleTests.length / ITEMS_PER_PAGE));
+  const pagedTests = visibleTests.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxTabs = 5;
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, start + maxTabs - 1);
+
+    for (let i = start; i <= end; i += 1) {
+      pages.push(i);
+    }
+
+    if (end < totalPages) {
+      pages.push('...');
+      pages.push(totalPages);
+    }
+
+    if (start > 1) {
+      pages.unshift('...');
+      pages.unshift(1);
+    }
+
+    return pages;
+  };
+
   const handleToggleExpired = (checked) => {
     if (!athleteId) return;
     setShowExpiredByAthlete((prev) => ({ ...prev, [athleteId]: checked }));
@@ -100,175 +141,217 @@ const PhysicalTestsPage = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4, pt: 12 }}>
-      <Paper elevation={0} sx={{ p: 3, mb: 3, backgroundColor: 'primary.main', color: 'white' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FactCheckIcon sx={{ fontSize: 40 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="700">
-              Testes Físicos
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Agende e edite testes por aluno
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+    <div className="physical-tests-page">
+      <div className="physical-tests-summary-card">
+        <div className="physical-tests-summary-title">Testes Físicos</div>
+        <div className="physical-tests-summary-subtitle">
+          Agende e acompanhe testes por aluno em um único painel.
+        </div>
 
-      <Paper elevation={1} sx={{ mb: 2, p: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel>Selecione o aluno</InputLabel>
-          <Select
-            value={selectedAthleteId}
-            onChange={(e) => setSelectedAthleteId(e.target.value)}
-            label="Selecione o aluno"
-            disabled={loadingAthletes}
-          >
-            {athletes.map((athlete) => (
-              <MenuItem key={athlete.id} value={String(athlete.id)}>
-                {athlete.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Paper>
+        <div className="physical-tests-summary-stats">
+          <div className="physical-tests-stat-item">
+            <div className="physical-tests-stat-label">Total de testes</div>
+            <div className="physical-tests-stat-value">{athleteId ? normalizedTests.length : 0}</div>
+          </div>
+          <div className="physical-tests-stat-item">
+            <div className="physical-tests-stat-label">Testes ativos</div>
+            <div className="physical-tests-stat-value">{athleteId ? activeCount : 0}</div>
+          </div>
+          <div className="physical-tests-stat-item">
+            <div className="physical-tests-stat-label">Testes expirados</div>
+            <div className="physical-tests-stat-value">{athleteId ? expiredCount : 0}</div>
+          </div>
+        </div>
+      </div>
 
-      {athletesError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Erro ao carregar alunos: {athletesError.message}
-        </Alert>
-      )}
+      <div className="physical-tests-card">
+        <section className="physical-tests-controls">
+          <div className="physical-tests-controls-group">
+            <label className="physical-test-field">
+              <span className="physical-test-field-label">Aluno</span>
+              <select
+                className="physical-test-select"
+                value={selectedAthleteId}
+                onChange={(e) => setSelectedAthleteId(e.target.value)}
+                disabled={loadingAthletes}
+              >
+                <option value="">
+                  {loadingAthletes ? 'Carregando alunos...' : 'Selecione um aluno'}
+                </option>
+                {athletes.map((athlete) => (
+                  <option key={athlete.id} value={String(athlete.id)}>
+                    {athlete.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      {!athleteId && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            backgroundColor: '#f8f9fa',
-            border: '2px dashed',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" color="text.secondary" fontWeight="500">
-            Selecione um aluno
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Escolha um aluno para ver e agendar testes físicos
-          </Typography>
-        </Paper>
-      )}
-
-      {athleteId && (
-        <>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <FormControlLabel
-              control={
-                <Switch
+            <label className="physical-test-field">
+              <span className="physical-test-field-label">Filtros</span>
+              <span className="physical-test-toggle">
+                <input
+                  type="checkbox"
                   checked={showExpired}
                   onChange={(e) => handleToggleExpired(e.target.checked)}
+                  disabled={!athleteId}
                 />
-              }
-              label="Mostrar Expirados"
-            />
+                Mostrar expirados
+              </span>
+            </label>
+          </div>
 
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setScheduleOpen(true)}
-            >
-              Agendar Teste
-            </Button>
-          </Box>
+          <button
+            type="button"
+            className="add-physical-test-btn"
+            onClick={() => setScheduleOpen(true)}
+            disabled={!athleteId}
+          >
+            <AddIcon fontSize="small" />
+            {' '}
+            Agendar Teste
+          </button>
+        </section>
 
-          {isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress />
-            </Box>
-          )}
+        {athletesError && (
+          <div className="physical-tests-message error">
+            Erro ao carregar alunos: {athletesError.message}
+          </div>
+        )}
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              Erro ao carregar testes: {error.message}
-            </Alert>
-          )}
+        {!athleteId ? (
+          <div className="physical-tests-empty-state">
+            <div className="physical-tests-empty-title">Selecione um aluno</div>
+            <div className="physical-tests-empty-text">
+              Escolha um aluno para ver e agendar testes físicos.
+            </div>
+          </div>
+        ) : (
+          <section className="physical-tests-table-wrapper">
+            {error && (
+              <div className="physical-tests-message error">
+                Erro ao carregar testes: {error.message}
+              </div>
+            )}
 
-          {!isLoading && !error && visibleTests.length === 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 6,
-                textAlign: 'center',
-                backgroundColor: '#f8f9fa',
-                border: '2px dashed',
-                borderColor: 'divider',
-              }}
-            >
-              <Typography variant="h6" color="text.secondary" fontWeight="500">
-                Nenhum teste agendado
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {showExpired
-                  ? 'Não há testes para este aluno'
-                  : 'Não há testes futuros para este aluno'}
-              </Typography>
-            </Paper>
-          )}
+            <table className="physical-tests-table">
+              <thead>
+                <tr>
+                  <th>TESTE</th>
+                  <th>DATA</th>
+                  <th>STATUS</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="empty-row">
+                      Carregando dados...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={4} className="empty-row">
+                      Falha ao carregar dados. Tente novamente.
+                    </td>
+                  </tr>
+                ) : visibleTests.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="empty-row">
+                      {showExpired
+                        ? 'Não há testes para este aluno.'
+                        : 'Não há testes futuros para este aluno.'}
+                    </td>
+                  </tr>
+                ) : (
+                  pagedTests.map((test) => {
+                    const scheduledLabel = test.scheduledIso
+                      ? new Date(test.scheduledIso).toLocaleDateString('pt-BR')
+                      : 'Sem data';
+                    const statusMeta = getStatusMeta(test);
 
-          {!isLoading && !error && visibleTests.length > 0 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {visibleTests.map((t) => {
-                const scheduledLabel = t.scheduledIso
-                  ? new Date(t.scheduledIso).toLocaleDateString('pt-BR')
-                  : 'Sem data';
+                    return (
+                      <tr key={test.id}>
+                        <td>
+                          <div className="physical-test-cell">
+                            <div className="physical-test-icon">
+                              <FactCheckIcon fontSize="small" />
+                            </div>
+                            <div className="physical-test-text">
+                              <div className="physical-test-name">{test.name}</div>
+                              <div className="physical-test-description">
+                                {test.description || selectedAthlete?.name || 'Sem descrição'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="physical-test-date">{scheduledLabel}</span>
+                        </td>
+                        <td>
+                          <span className={`physical-test-status ${statusMeta.className}`}>
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="edit-physical-test-btn"
+                            onClick={() => handleOpenEdit(test)}
+                          >
+                            <EditIcon fontSize="small" />
+                            {' '}
+                            Editar
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
 
-                let statusChip = null;
-                if (t.isExpired) {
-                  statusChip = <Chip label="Expirado" color="error" size="small" />;
-                } else if (typeof t.daysDiff === 'number') {
-                  if (t.daysDiff === 0) {
-                    statusChip = <Chip label="Hoje" size="small" />;
-                  } else {
-                    statusChip = <Chip label={`Faltam ${t.daysDiff} dias`} size="small" />;
-                  }
-                }
+            {visibleTests.length > ITEMS_PER_PAGE && (
+              <div className="pagination-tabs">
+                <button
+                  className="pagination-button"
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  ‹
+                </button>
 
-                return (
-                  <Card key={t.id}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" fontWeight="700">
-                            {t.name}
-                          </Typography>
-                          {t.description && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                              {t.description}
-                            </Typography>
-                          )}
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                            Data: {scheduledLabel}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>{statusChip}</Box>
-                      </Box>
-                    </CardContent>
-                    <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
-                      <Button
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={() => handleOpenEdit(t)}
-                      >
-                        Editar
-                      </Button>
-                    </CardActions>
-                  </Card>
-                );
-              })}
-            </Box>
-          )}
-        </>
-      )}
+                {getPageNumbers().map((page, index) =>
+                  page === '...' ? (
+                    <span key={`dots-${index}`} className="pagination-dots">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+
+                <button
+                  className="pagination-button"
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
 
       <SchedulePhysicalTestModal
         open={scheduleOpen}
@@ -283,7 +366,7 @@ const PhysicalTestsPage = () => {
         physicalTest={selectedTest}
         userName={userName}
       />
-    </Container>
+    </div>
   );
 };
 
