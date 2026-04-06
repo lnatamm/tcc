@@ -1,30 +1,21 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import './style.css';
 import TodayIcon from '@mui/icons-material/Today';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ActiveExercise from '../../components/ActiveExercise';
 import { useTodayExercises, useAthletes } from '../../hooks/useApi';
 
+const FILTER_OPTIONS = [
+  { value: 'all', label: 'all' },
+  { value: 'not-started', label: 'pending' },
+  { value: 'in-progress', label: 'in progress' },
+  { value: 'completed', label: 'completed' },
+];
+
 const TodayRoutines = () => {
   const [selectedAthleteId, setSelectedAthleteId] = useState(null);
-  const [filterTab, setFilterTab] = useState('all'); // all, not-started, in-progress, completed
+  const [filterTab, setFilterTab] = useState('all');
 
   const { data: athletes = [], isLoading: loadingAthletes } = useAthletes();
   const { data: exercises = [], isLoading, error, refetch } = useTodayExercises(selectedAthleteId);
@@ -37,13 +28,15 @@ const TodayRoutines = () => {
     day: 'numeric',
   });
 
-  const filteredExercises = exercises.filter((ex) => {
-    if (filterTab === 'all') return true;
-    if (filterTab === 'not-started') return ex.status === 'NOT STARTED';
-    if (filterTab === 'in-progress') return ex.status === 'IN PROGRESS';
-    if (filterTab === 'completed') return ex.status === 'COMPLETED';
-    return true;
-  });
+  const filteredExercises = useMemo(() => {
+    return exercises.filter((ex) => {
+      if (filterTab === 'all') return true;
+      if (filterTab === 'not-started') return ex.status === 'NOT STARTED';
+      if (filterTab === 'in-progress') return ex.status === 'IN PROGRESS';
+      if (filterTab === 'completed') return ex.status === 'COMPLETED';
+      return true;
+    });
+  }, [exercises, filterTab]);
 
   const counts = {
     all: exercises.length,
@@ -56,208 +49,163 @@ const TodayRoutines = () => {
     ? Math.round((counts.completed / exercises.length) * 100)
     : 0;
 
+  const currentFilterLabel = FILTER_OPTIONS.find((option) => option.value === filterTab)?.label || 'all';
+
   return (
-    <Container maxWidth="md" sx={{ py: 4, pt: 12 }}>
-      <Paper elevation={0} sx={{ p: 3, mb: 3, backgroundColor: 'primary.main', color: 'white' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <TodayIcon sx={{ fontSize: 40 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="700">
-              Today's Workout
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              {todayFormatted}
-            </Typography>
-          </Box>
-        </Box>
+    <div className="today-routines-page">
+      <div className="today-summary-card">
+        <div className="today-summary-header">
+          <div className="today-summary-icon">
+            <TodayIcon fontSize="medium" />
+          </div>
+          <div>
+            <h1 className="today-summary-title">Today's Workout</h1>
+            <div className="today-summary-subtitle">{todayFormatted}</div>
+          </div>
+        </div>
 
-        {selectedAthleteId && exercises.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-            <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="700">
-                {counts.completed}
-              </Typography>
-              <Typography variant="caption">Completed</Typography>
-            </Box>
-            <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="700">
-                {counts['in-progress']}
-              </Typography>
-              <Typography variant="caption">In Progress</Typography>
-            </Box>
-            <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="700">
-                {counts['not-started']}
-              </Typography>
-              <Typography variant="caption">Pending</Typography>
-            </Box>
-            <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Typography variant="h3" fontWeight="700">
-                {completionPercentage}%
-              </Typography>
-              <Typography variant="caption">Progress</Typography>
-            </Box>
-          </Box>
-        )}
-      </Paper>
+        <div className="today-summary-stats">
+          <div className="today-stat-item">
+            <div className="today-stat-label">completed</div>
+            <div className="today-stat-value">{selectedAthleteId ? counts.completed : 0}</div>
+          </div>
+          <div className="today-stat-item">
+            <div className="today-stat-label">in progress</div>
+            <div className="today-stat-value">{selectedAthleteId ? counts['in-progress'] : 0}</div>
+          </div>
+          <div className="today-stat-item">
+            <div className="today-stat-label">pending</div>
+            <div className="today-stat-value">{selectedAthleteId ? counts['not-started'] : 0}</div>
+          </div>
+          <div className="today-stat-item">
+            <div className="today-stat-label">progress</div>
+            <div className="today-stat-value">{selectedAthleteId ? `${completionPercentage}%` : '0%'}</div>
+          </div>
+        </div>
+      </div>
 
-      <Paper elevation={1} sx={{ mb: 3, p: 2 }}>
-        <FormControl fullWidth>
-          <InputLabel>Select Athlete</InputLabel>
-          <Select
-            value={selectedAthleteId || ''}
-            onChange={(e) => setSelectedAthleteId(e.target.value)}
-            label="Select Athlete"
-          >
-            {athletes.map((athlete) => (
-              <MenuItem key={athlete.id} value={athlete.id}>
-                {athlete.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Paper>
+      <div className="today-panel-card">
+        <section className="today-controls">
+          <div className="today-controls-fields">
+            <label className="today-field">
+              <span className="today-field-label">Athlete</span>
+              <select
+                className="today-select"
+                value={selectedAthleteId || ''}
+                onChange={(e) => setSelectedAthleteId(e.target.value || null)}
+                disabled={loadingAthletes}
+              >
+                <option value="">
+                  {loadingAthletes ? 'Loading athletes...' : 'Select athlete'}
+                </option>
+                {athletes.map((athlete) => (
+                  <option key={athlete.id} value={athlete.id}>
+                    {athlete.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-      {!selectedAthleteId && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            backgroundColor: '#f8f9fa',
-            border: '2px dashed',
-            borderColor: 'divider',
-          }}
-        >
-          <FitnessCenterIcon sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" fontWeight="500">
-            Select an Athlete
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Choose an athlete to view their workout schedule for today
-          </Typography>
-        </Paper>
-      )}
+            <div className="today-field today-field--filters">
+              <span className="today-field-label">Status filter</span>
+              <div className="today-filter-group">
+                {FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`today-filter-pill ${filterTab === option.value ? 'active' : ''}`}
+                    onClick={() => setFilterTab(option.value)}
+                  >
+                    <span>{option.label}</span>
+                    <span className="today-filter-count">{counts[option.value]}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
-      {selectedAthleteId && (
-        <>
-          {isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress />
-            </Box>
-          )}
+        {!selectedAthleteId ? (
+          <div className="today-empty-state">
+            <div className="today-empty-icon">
+              <FitnessCenterIcon fontSize="large" />
+            </div>
+            <div className="today-empty-title">Select an Athlete</div>
+            <div className="today-empty-text">
+              Choose an athlete to view their workout schedule for today.
+            </div>
+          </div>
+        ) : (
+          <div className="today-content-card">
+            {error && (
+              <div className="today-message error">
+                Error loading exercises: {error.message}
+              </div>
+            )}
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              Error loading exercises: {error.message}
-            </Alert>
-          )}
+            <div className="today-content-header">
+ 
 
-          {!isLoading && !error && exercises.length === 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 6,
-                textAlign: 'center',
-                backgroundColor: '#f8f9fa',
-                border: '2px dashed',
-                borderColor: 'divider',
-              }}
-            >
-              <CalendarTodayIcon sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" fontWeight="500">
-                No Exercises Scheduled
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                There are no exercises scheduled for today
-              </Typography>
-            </Paper>
-          )}
-
-          {!isLoading && !error && exercises.length > 0 && (
-            <>
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                <Tabs
-                  value={filterTab}
-                  onChange={(e, newValue) => setFilterTab(newValue)}
-                  variant="fullWidth"
-                  sx={{
-                    '& .MuiTab-root': {
-                      textTransform: 'none',
-                      fontWeight: 500,
-                    },
-                  }}
+              {filterTab !== 'all' && (
+                <span
+                  className={`today-status-badge ${
+                    filterTab === 'completed'
+                      ? 'completed'
+                      : filterTab === 'in-progress'
+                        ? 'in-progress'
+                        : 'pending'
+                  }`}
                 >
-                  <Tab
-                    value="all"
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>All</span>
-                        <Chip label={counts.all} size="small" />
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    value="not-started"
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>Pending</span>
-                        <Chip label={counts['not-started']} size="small" color="default" />
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    value="in-progress"
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PlayCircleIcon sx={{ fontSize: 16 }} />
-                        <span>Active</span>
-                        <Chip label={counts['in-progress']} size="small" color="warning" />
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    value="completed"
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CheckCircleIcon sx={{ fontSize: 16 }} />
-                        <span>Done</span>
-                        <Chip label={counts.completed} size="small" color="success" />
-                      </Box>
-                    }
-                  />
-                </Tabs>
-              </Box>
-
-              {filteredExercises.length === 0 ? (
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 4,
-                    textAlign: 'center',
-                    backgroundColor: '#f8f9fa',
-                  }}
-                >
-                  <Typography variant="body1" color="text.secondary">
-                    No exercises in this category
-                  </Typography>
-                </Paper>
-              ) : (
-                <Box>
-                  {filteredExercises.map((exercise) => (
-                    <ActiveExercise
-                      key={exercise.routine_has_exercise_id}
-                      exerciseData={exercise}
-                      onComplete={() => refetch()}
-                    />
-                  ))}
-                </Box>
+                  {currentFilterLabel}
+                </span>
               )}
-            </>
-          )}
-        </>
-      )}
-    </Container>
+            </div>
+
+            {isLoading ? (
+              <div className="today-empty-state">
+                <div className="today-empty-icon">
+                  <TodayIcon fontSize="large" />
+                </div>
+                <div className="today-empty-title">Loading exercises</div>
+                <div className="today-empty-text">
+                  Fetching today's workout for the selected athlete.
+                </div>
+              </div>
+            ) : !error && exercises.length === 0 ? (
+              <div className="today-empty-state">
+                <div className="today-empty-icon">
+                  <CalendarTodayIcon fontSize="large" />
+                </div>
+                <div className="today-empty-title">No Exercises Scheduled</div>
+                <div className="today-empty-text">
+                  There are no exercises scheduled for today.
+                </div>
+              </div>
+            ) : !error && filteredExercises.length === 0 ? (
+              <div className="today-empty-state">
+                <div className="today-empty-icon">
+                  <CalendarTodayIcon fontSize="large" />
+                </div>
+                <div className="today-empty-title">No exercises in this category</div>
+                <div className="today-empty-text">
+                  Try another filter to inspect completed, in progress or pending exercises.
+                </div>
+              </div>
+            ) : (
+              <div className="today-exercises-list">
+                {filteredExercises.map((exercise) => (
+                  <ActiveExercise
+                    key={exercise.routine_has_exercise_id}
+                    exerciseData={exercise}
+                    onComplete={() => refetch()}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

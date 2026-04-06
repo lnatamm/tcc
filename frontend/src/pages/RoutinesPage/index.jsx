@@ -1,42 +1,63 @@
-import React, { useState } from 'react';
-import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
-  Avatar,
-  Chip,
-  CircularProgress,
-  Alert,
-  TextField,
-  InputAdornment,
-} from '@mui/material';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import React, { useEffect, useMemo, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import PersonIcon from '@mui/icons-material/Person';
 import { useAthletes } from '../../hooks/useApi';
-import { useNavigate } from 'react-router-dom';
 import AthleteRoutinesModal from '../../components/AthleteRoutinesModal';
 import './style.css';
+
+const ITEMS_PER_PAGE = 10;
 
 const RoutinesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [routinesModalOpen, setRoutinesModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const { data: athletes = [], isLoading, error } = useAthletes();
-  const navigate = useNavigate();
 
-  const userName = "Derek";
+  const userName = 'Derek';
 
-  const filteredAthletes = athletes.filter((athlete) =>
-    athlete.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAthletes = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return athletes;
+
+    return athletes.filter((athlete) =>
+      athlete.name.toLowerCase().includes(query),
+    );
+  }, [athletes, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filteredAthletes.length]);
+
+  const pagedAthletes = filteredAthletes.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredAthletes.length / ITEMS_PER_PAGE));
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxTabs = 5;
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, start + maxTabs - 1);
+
+    for (let i = start; i <= end; i += 1) {
+      pages.push(i);
+    }
+
+    if (end < totalPages) {
+      pages.push('...');
+      pages.push(totalPages);
+    }
+
+    if (start > 1) {
+      pages.unshift('...');
+      pages.unshift(1);
+    }
+
+    return pages;
+  };
 
   const handleViewRoutines = (athlete) => {
     setSelectedAthlete(athlete);
@@ -49,142 +70,164 @@ const RoutinesPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4, pt: 12 }}>
-      <Paper elevation={0} sx={{ p: 3, mb: 4, backgroundColor: 'primary.main', color: 'white' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FitnessCenterIcon sx={{ fontSize: 48 }} />
-          <Box>
-            <Typography variant="h4" fontWeight="700">
-              Training Routines
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Manage and view athlete workout routines
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+    <div className="routines-page">
+      <div className="routines-summary-card">
+        <div className="routines-summary-title">Rotinas de Treino</div>
+        <div className="routines-summary-subtitle">
+          Consulte e abra o painel de rotinas dos atletas em uma única lista.
+        </div>
 
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Search athletes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ backgroundColor: 'white' }}
-        />
-      </Box>
+        <div className="routines-summary-stats">
+          <div className="routines-stat-item">
+            <div className="routines-stat-label">Total de atletas</div>
+            <div className="routines-stat-value">{athletes.length}</div>
+          </div>
+          <div className="routines-stat-item">
+            <div className="routines-stat-label">Resultados filtrados</div>
+            <div className="routines-stat-value">{filteredAthletes.length}</div>
+          </div>
+          <div className="routines-stat-item">
+            <div className="routines-stat-label">Rotinas abertas</div>
+            <div className="routines-stat-value">{selectedAthlete ? 1 : 0}</div>
+          </div>
+        </div>
+      </div>
 
-      {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-          <CircularProgress />
-        </Box>
-      )}
+      <div className="routines-table-card">
+        <section className="routines-controls">
+          <div className="search-wrapper">
+            <SearchIcon className="search-icon" fontSize="small" />
+            <input
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Pesquise por nome do atleta"
+            />
+          </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Error loading athletes: {error.message}
-        </Alert>
-      )}
+          <button
+            type="button"
+            className="routines-action-btn"
+            onClick={() => setSearchTerm('')}
+            disabled={!searchTerm}
+          >
+            Limpar busca
+          </button>
+        </section>
 
-      {!isLoading && !error && filteredAthletes.length === 0 && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            backgroundColor: '#f8f9fa',
-            border: '2px dashed',
-            borderColor: 'divider',
-          }}
-        >
-          <PersonIcon sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" fontWeight="500">
-            {searchTerm ? 'No athletes found' : 'No athletes available'}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {searchTerm
-              ? 'Try adjusting your search criteria'
-              : 'Add athletes to get started'}
-          </Typography>
-        </Paper>
-      )}
+        {error && (
+          <div className="routines-message error">
+            Erro ao carregar atletas: {error.message}
+          </div>
+        )}
 
-      {!isLoading && !error && filteredAthletes.length > 0 && (
-        <>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Athletes ({filteredAthletes.length})
-          </Typography>
-          <Grid container spacing={3}>
-            {filteredAthletes.map((athlete) => (
-              <Grid item xs={12} sm={6} md={4} key={athlete.id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    },
-                  }}
-                >
-                  <CardContent sx={{ flex: 1 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                        mb: 2,
-                      }}
-                    >
-                      <Avatar
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          bgcolor: 'primary.main',
-                          fontSize: '1.5rem',
-                          fontWeight: 600,
-                        }}
+        <section className="routines-table-wrapper">
+          <table className="routines-table">
+            <thead>
+              <tr>
+                <th>ALUNO</th>
+                <th>PERFIL</th>
+                <th>ROTINAS</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="empty-row">
+                    Carregando atletas...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={4} className="empty-row">
+                    Falha ao carregar atletas. Tente novamente.
+                  </td>
+                </tr>
+              ) : filteredAthletes.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="empty-row">
+                    {searchTerm
+                      ? 'Nenhum atleta encontrado para a busca informada.'
+                      : 'Nenhum atleta disponível para exibir rotinas.'}
+                  </td>
+                </tr>
+              ) : (
+                pagedAthletes.map((athlete) => (
+                  <tr key={athlete.id}>
+                    <td>
+                      <div className="athlete-cell">
+                        <div className="athlete-avatar">
+                          {athlete.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="athlete-text">
+                          <div className="athlete-name">{athlete.name}</div>
+                          <div className="athlete-sub">ID do atleta: {athlete.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="routine-badge">Atleta</span>
+                    </td>
+                    <td>
+                      <span className="routine-summary">Abrir painel semanal de rotinas</span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="view-routines-btn"
+                        onClick={() => handleViewRoutines(athlete)}
                       >
-                        {athlete.name.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" fontWeight="600">
-                          {athlete.name}
-                        </Typography>
-                        <Chip
-                          icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                          label="Athlete"
-                          size="small"
-                          sx={{ mt: 0.5 }}
-                        />
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      startIcon={<CalendarTodayIcon />}
-                      onClick={() => handleViewRoutines(athlete)}
-                    >
-                      View Routines
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </>
-      )}
+                        <CalendarTodayIcon fontSize="small" />
+                        Visualizar rotinas
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          {filteredAthletes.length > ITEMS_PER_PAGE && (
+            <div className="pagination-tabs">
+              <button
+                className="pagination-button"
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                ‹
+              </button>
+
+              {getPageNumbers().map((page, index) =>
+                page === '...' ? (
+                  <span key={`dots-${index}`} className="pagination-dots">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    type="button"
+                    className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+
+              <button
+                className="pagination-button"
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
 
       <AthleteRoutinesModal
         open={routinesModalOpen}
@@ -192,7 +235,7 @@ const RoutinesPage = () => {
         athlete={selectedAthlete}
         userName={userName}
       />
-    </Container>
+    </div>
   );
 };
 
