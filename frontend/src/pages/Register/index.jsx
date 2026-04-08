@@ -13,6 +13,10 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileType, setProfileType] = useState('athlete');
+  const [userTypes, setUserTypes] = useState([]);
+  const [levels, setLevels] = useState([]);
+  const [levelId, setLevelId] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -20,6 +24,24 @@ const Register = () => {
       navigate('/home');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const loadRefs = async () => {
+      try {
+        const [typesRes, levelsRes] = await Promise.all([
+          api.get('/user-types'),
+          api.get('/levels'),
+        ]);
+
+        setUserTypes(typesRes?.data || []);
+        setLevels(levelsRes?.data || []);
+      } catch (err) {
+        setError('Falha ao carregar tipos/níveis.');
+      }
+    };
+
+    loadRefs();
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -35,13 +57,25 @@ const Register = () => {
       return;
     }
 
+    const typeId = userTypes?.find((t) => t?.name === profileType)?.id;
+    if (!typeId) {
+      setError('Tipo de usuário inválido.');
+      return;
+    }
+
+    if (profileType === 'coach' && !levelId) {
+      setError('Selecione um nível para Professor.');
+      return;
+    }
+
     try {
       await api.post('/auth/register', {
         usuario: username,
         nome: name,
         email,
         senha: password,
-        tipo: 'user',
+        id_user_type: typeId,
+        id_level: profileType === 'coach' ? Number(levelId) : undefined,
       });
 
       navigate('/login');
@@ -92,6 +126,44 @@ const Register = () => {
               required
             />
           </label>
+
+          <label className="login-label">
+            Perfil
+            <select
+              className="login-input"
+              value={profileType}
+              onChange={(e) => {
+                const value = e.target.value;
+                setProfileType(value);
+                if (value !== 'coach') {
+                  setLevelId('');
+                }
+              }}
+              required
+            >
+              <option value="athlete">Aluno</option>
+              <option value="coach">Professor</option>
+            </select>
+          </label>
+
+          {profileType === 'coach' && (
+            <label className="login-label">
+              Nível
+              <select
+                className="login-input"
+                value={levelId}
+                onChange={(e) => setLevelId(e.target.value)}
+                required
+              >
+                <option value="">Selecione um nível</option>
+                {levels.map((lvl) => (
+                  <option key={lvl.id} value={lvl.id}>
+                    {lvl.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <label className="login-label">
             Senha

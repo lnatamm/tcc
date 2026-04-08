@@ -1,5 +1,6 @@
 CREATE TABLE "athlete"(
     "id" SERIAL NOT NULL,
+    "id_user" BIGINT NULL,
     "name" TEXT NOT NULL,
     "photo_path" TEXT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
@@ -43,6 +44,7 @@ ALTER TABLE
 CREATE TABLE "coach"(
     "id" SERIAL NOT NULL,
     "id_level" BIGINT NOT NULL,
+    "id_user" BIGINT NULL,
     "name" TEXT NOT NULL,
     "photo_path" TEXT NULL,
     "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
@@ -300,12 +302,30 @@ CREATE TABLE "formula"(
 );
 ALTER TABLE
     "formula" ADD PRIMARY KEY("id");
+
+CREATE TABLE user_type (
+  "id" serial not null primary key,
+  "name" text not null,
+  "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+  "created_by" TEXT NOT NULL,
+  "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+  "updated_by" TEXT NULL,
+  "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+  "deleted_by" TEXT NULL
+)
+
+ALTER TABLE
+    "users" ADD CONSTRAINT "users_id_user_type_foreign" FOREIGN KEY("id_user_type") REFERENCES "user_type"("id");
 ALTER TABLE
     "metric" ADD CONSTRAINT "metric_id_formula_foreign" FOREIGN KEY("id_formula") REFERENCES "formula"("id");
 ALTER TABLE
     "metric" ADD CONSTRAINT "metric_id_sport_foreign" FOREIGN KEY("id_sport") REFERENCES "sport"("id");
 ALTER TABLE
     "coach" ADD CONSTRAINT "coach_id_level_foreign" FOREIGN KEY("id_level") REFERENCES "level"("id");
+ALTER TABLE
+    "coach" ADD CONSTRAINT "coach_id_user_foreign" FOREIGN KEY("id_user") REFERENCES "users"("id");
+ALTER TABLE
+    "athlete" ADD CONSTRAINT "athlete_id_user_foreign" FOREIGN KEY("id_user") REFERENCES "users"("id");
 ALTER TABLE
     "athlete_has_metric" ADD CONSTRAINT "athlete_has_metric_id_metric_foreign" FOREIGN KEY("id_metric") REFERENCES "metric"("id");
 ALTER TABLE

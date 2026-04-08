@@ -23,6 +23,8 @@ from routes.event_routes import api_events
 from routes.type_exercise_routes import api_type_exercises
 from routes.exercise_stats_routes import router as exercise_stats_router
 from routes.metric_routes import router as metric_router
+from routes.level_routes import router as level_router
+from routes.user_type_routes import router as user_type_router
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
@@ -65,6 +67,8 @@ api.include_router(api_events)
 api.include_router(api_type_exercises)
 api.include_router(exercise_stats_router)
 api.include_router(metric_router)
+api.include_router(level_router)
+api.include_router(user_type_router)
 
 app.include_router(api)
 

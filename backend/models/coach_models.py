@@ -6,6 +6,7 @@ class CoachBase(BaseModel):
     name: str
     id_level: int
     photo_path: Optional[str] = None
+    id_user: Optional[int] = None
 
 class CoachCreate(CoachBase, Create):
     pass

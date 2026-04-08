@@ -5,6 +5,7 @@ from models.crud_models import Create, Update, Response
 class AthleteBase(BaseModel):
     name: str
     photo_path: Optional[str] = None
+    id_user: Optional[int] = None
 
 class AthleteCreate(AthleteBase, Create):
     pass

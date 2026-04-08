@@ -10,6 +10,8 @@ from models.team_models import *
 from models.routine_models import *
 from models.event_models import *
 from models.user_models import *
+from models.level_models import *
+from models.user_type_models import *
 from datetime import datetime
 
 class SupabaseIntegration:
@@ -41,15 +43,33 @@ class SupabaseIntegration:
             "email": user.email,
             "nome": user.nome,
             "senha": user.senha,
-            "tipo": user.tipo,
+            "id_user_type": user.id_user_type,
             "ultimo_acesso": None,
         }
         return self.client.table('users').insert(data).execute()
+
+    def delete_user(self, user_id: int):
+        """Deletes a user by ID (best-effort rollback helper)."""
+        return self.client.table('users').delete().eq('id', user_id).execute()
 
     def update_user_last_access(self, user_id: int):
         """Updates the user's last access timestamp."""
         now = datetime.utcnow().isoformat()
         return self.client.table('users').update({"ultimo_acesso": now}).eq('id', user_id).execute()
+
+    # ---------- Reference tables ----------
+
+    def get_all_levels(self):
+        """Returns all levels."""
+        return self.client.table('level').select('*').order('name').execute()
+
+    def get_all_user_types(self):
+        """Returns all user types (e.g., athlete, coach)."""
+        return self.client.table('user_type').select('*').order('name').execute()
+
+    def get_user_type_by_id(self, type_id: int):
+        """Returns a user type by ID."""
+        return self.client.table('user_type').select('*').eq('id', type_id).execute()
 
     # ---------- Athletes ----------
 
@@ -77,10 +97,14 @@ class SupabaseIntegration:
 
     def create_athlete(self, athlete: AthleteCreate):
         """Creates a new athlete"""
+        created_at = athlete.created_at or datetime.utcnow().isoformat()
+        created_by = athlete.created_by or "system"
         data = {
             "name": athlete.name,
-            "email": athlete.email,
-            "birth_date": athlete.birth_date
+            "photo_path": athlete.photo_path,
+            "id_user": athlete.id_user,
+            "created_at": created_at,
+            "created_by": created_by,
         }
         return self.client.table('athlete').insert(data).execute()
     
@@ -119,10 +143,15 @@ class SupabaseIntegration:
 
     def create_coach(self, coach: CoachCreate):
         """Creates a new coach"""
+        created_at = coach.created_at or datetime.utcnow().isoformat()
+        created_by = coach.created_by or "system"
         data = {
             "name": coach.name,
             "id_level": coach.id_level,
-            "photo_path": coach.photo_path
+            "photo_path": coach.photo_path,
+            "id_user": coach.id_user,
+            "created_at": created_at,
+            "created_by": created_by,
         }
         return self.client.table('coach').insert(data).execute()
 
