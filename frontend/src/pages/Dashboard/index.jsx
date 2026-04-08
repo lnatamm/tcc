@@ -1,22 +1,5 @@
-import { useState, useEffect } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  Paper,
-  Chip,
-  Alert,
-  IconButton,
-  Button
-} from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import './style.css';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -48,8 +31,9 @@ export default function Dashboard() {
   const [selectedAthlete, setSelectedAthlete] = useState('');
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [athletesLoading, setAthletesLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
-  // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -57,9 +41,29 @@ export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Load athletes on component mount
+  const loadMetrics = async (athleteId) => {
+    if (!athleteId) {
+      setMetrics([]);
+      return;
+    }
+
+    setLoading(true);
+    setLoadError('');
+    try {
+      const response = await api.get(`/athletes/${athleteId}/metrics`);
+      setMetrics(response.data);
+    } catch (error) {
+      console.error('Error loading metrics:', error);
+      setLoadError('Error loading metrics. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchAthletes = async () => {
+      setAthletesLoading(true);
+      setLoadError('');
       try {
         const response = await api.get('/athletes');
         setAthletes(response.data);
@@ -68,26 +72,18 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error('Error loading athletes:', error);
+        setLoadError('Error loading athletes. Please try again.');
+      } finally {
+        setAthletesLoading(false);
       }
     };
+
     fetchAthletes();
   }, []);
 
-  // Load metrics when an athlete is selected
   useEffect(() => {
     if (selectedAthlete) {
-      const fetchMetrics = async () => {
-        setLoading(true);
-        try {
-          const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
-          setMetrics(response.data);
-        } catch (error) {
-          console.error('Error loading metrics:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchMetrics();
+      loadMetrics(selectedAthlete);
     }
   }, [selectedAthlete]);
 
@@ -115,11 +111,7 @@ export default function Dashboard() {
       await api.delete(`/metrics/${selectedMetric.id}`);
       setDeleteModalOpen(false);
       setSelectedMetric(null);
-      // Reload metrics
-      if (selectedAthlete) {
-        const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
-        setMetrics(response.data);
-      }
+      await loadMetrics(selectedAthlete);
     } catch (error) {
       console.error('Error deleting metric:', error);
       alert('Error deleting metric. Please try again.');
@@ -129,11 +121,7 @@ export default function Dashboard() {
   };
 
   const handleMetricSuccess = async () => {
-    // Reload metrics after adding or editing
-    if (selectedAthlete) {
-      const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
-      setMetrics(response.data);
-    }
+    await loadMetrics(selectedAthlete);
   };
 
   const handleAddValue = () => {
@@ -141,280 +129,286 @@ export default function Dashboard() {
   };
 
   const handleValueSuccess = async () => {
-    // Reload metrics after adding a value
-    if (selectedAthlete) {
-      const response = await api.get(`/athletes/${selectedAthlete}/metrics`);
-      setMetrics(response.data);
-    }
+    await loadMetrics(selectedAthlete);
   };
 
-  // Separate aggregated and non-aggregated metrics
-  const simpleMetrics = metrics.filter(m => !m.aggregated);
-  const aggregatedMetrics = metrics.filter(m => m.aggregated);
+  const selectedAthleteName = useMemo(
+    () => athletes.find((athlete) => athlete.id === selectedAthlete)?.name || 'No athlete selected',
+    [athletes, selectedAthlete],
+  );
 
-  // Prepare data for charts
-  const barChartData = simpleMetrics.map(m => ({
-    name: m.name,
-    value: m.value || 0
-  }));
+  const simpleMetrics = useMemo(() => metrics.filter((metric) => !metric.aggregated), [metrics]);
+  const aggregatedMetrics = useMemo(() => metrics.filter((metric) => metric.aggregated), [metrics]);
 
-  const pieChartData = simpleMetrics.filter(m => m.value).map(m => ({
-    name: m.name,
-    value: m.value
-  }));
+  const barChartData = useMemo(
+    () => simpleMetrics.map((metric) => ({
+      name: metric.name,
+      value: metric.value || 0,
+    })),
+    [simpleMetrics],
+  );
+
+  const pieChartData = useMemo(
+    () => simpleMetrics.filter((metric) => metric.value).map((metric) => ({
+      name: metric.name,
+      value: metric.value,
+    })),
+    [simpleMetrics],
+  );
 
   return (
-    <Box sx={{ minHeight: '100vh', overflowY: 'auto', pb: 6 }}>
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Metrics Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Visualize and analyze athlete performance metrics
-          </Typography>
-        </Box>
+    <div className="dashboard-page">
+      <div className="dashboard-summary-card">
+        <div className="dashboard-summary-title">Metrics Dashboard</div>
+        <div className="dashboard-summary-subtitle">
+          Visualize and analyze athlete performance metrics with dedicated cards for metrics and charts.
+        </div>
 
-      {/* Athlete Selector with Add Metric Button */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <FormControl fullWidth>
-            <InputLabel id="athlete-select-label">Select an Athlete</InputLabel>
-            <Select
-              labelId="athlete-select-label"
-              id="athlete-select"
+        <div className="dashboard-summary-stats">
+          <div className="dashboard-stat-item">
+            <div className="dashboard-stat-label">Total metrics</div>
+            <div className="dashboard-stat-value">{metrics.length}</div>
+          </div>
+          <div className="dashboard-stat-item">
+            <div className="dashboard-stat-label">Simple metrics</div>
+            <div className="dashboard-stat-value">{simpleMetrics.length}</div>
+          </div>
+          <div className="dashboard-stat-item">
+            <div className="dashboard-stat-label">Aggregated metrics</div>
+            <div className="dashboard-stat-value">{aggregatedMetrics.length}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-controls-card">
+        <section className="dashboard-controls">
+          <label className="dashboard-field">
+            <span className="dashboard-field-label">Athlete</span>
+            <select
+              className="dashboard-select"
               value={selectedAthlete}
-              label="Select an Athlete"
               onChange={handleAthleteChange}
+              disabled={athletesLoading}
             >
+              <option value="">
+                {athletesLoading ? 'Loading athletes...' : 'Select an athlete'}
+              </option>
               {athletes.map((athlete) => (
-                <MenuItem key={athlete.id} value={athlete.id}>
+                <option key={athlete.id} value={athlete.id}>
                   {athlete.name}
-                </MenuItem>
+                </option>
               ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            className="dashboard-primary-btn"
             onClick={handleAddMetric}
-            sx={{ 
-              textTransform: 'none',
-              whiteSpace: 'nowrap',
-              minWidth: '220px'
-            }}
           >
+            <AddIcon fontSize="small" />
             Add Metric (System-wide)
-          </Button>
-        </Box>
-      </Paper>
+          </button>
+        </section>
+      </div>
+
+      {loadError && (
+        <div className="dashboard-section-card">
+          <div className="dashboard-message error">{loadError}</div>
+        </div>
+      )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
-          <CircularProgress />
-        </Box>
+        <div className="dashboard-section-card">
+          <div className="dashboard-empty-state">
+            <div className="dashboard-empty-title">Loading metrics</div>
+            <div className="dashboard-empty-text">
+              Fetching metric data for {selectedAthleteName}.
+            </div>
+          </div>
+        </div>
       ) : metrics.length === 0 ? (
-        <Alert severity="info">
-          No metrics found for this athlete.
-        </Alert>
+        <div className="dashboard-section-card">
+          <div className="dashboard-empty-state">
+            <div className="dashboard-empty-title">No metrics found</div>
+            <div className="dashboard-empty-text">
+              There are no metrics available for the selected athlete.
+            </div>
+          </div>
+        </div>
       ) : (
         <>
-          {/* All Metrics Cards */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#000000' }}>
-                Metrics
-              </Typography>
-              <Button 
-                variant="contained" 
-                startIcon={<AddIcon />}
+          <div className="dashboard-section-card">
+            <div className="dashboard-section-header">
+              <div>
+                <div className="dashboard-section-title">Metrics</div>
+                <div className="dashboard-section-subtitle">
+                  Review simple and aggregated metrics for {selectedAthleteName}.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="dashboard-success-btn"
                 onClick={handleAddValue}
-                sx={{ 
-                  textTransform: 'none',
-                  bgcolor: 'success.main',
-                  '&:hover': { bgcolor: 'success.dark' }
-                }}
               >
+                <AddIcon fontSize="small" />
                 Add Value for Athlete
-              </Button>
-            </Box>
-            <Grid container spacing={3}>
-              {metrics.map((metric, index) => (
-                <Grid item xs={12} sm={6} md={4} key={metric.id}>
-                  <Card sx={{ 
-                    height: '100%',
-                    background: metric.aggregated 
-                      ? `linear-gradient(135deg, ${COLORS[index % COLORS.length]}22 0%, ${COLORS[index % COLORS.length]}11 100%)`
-                      : 'transparent',
-                    border: metric.aggregated 
-                      ? `2px solid ${COLORS[index % COLORS.length]}`
-                      : `1px solid ${COLORS[index % COLORS.length]}`,
-                    borderLeft: `4px solid ${COLORS[index % COLORS.length]}`,
-                    position: 'relative'
-                  }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box sx={{ flex: 1 }}>
-                          {metric.aggregated && (
-                            <Chip 
-                              label="Aggregated" 
-                              size="small" 
-                              sx={{ mb: 1 }}
-                              color="primary"
-                            />
-                          )}
-                          <Typography variant="h6" component="div" gutterBottom>
-                            {metric.name}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleEditMetric(metric)}
-                            sx={{ 
-                              bgcolor: 'primary.main', 
-                              color: 'white',
-                              '&:hover': { bgcolor: 'primary.dark' }
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleDeleteMetric(metric)}
-                            sx={{ 
-                              bgcolor: 'error.main', 
-                              color: 'white',
-                              '&:hover': { bgcolor: 'error.dark' }
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                      {metric.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                          {metric.description}
-                        </Typography>
+              </button>
+            </div>
+
+            <div className="dashboard-metrics-list">
+              {metrics.map((metric, index) => {
+                const color = COLORS[index % COLORS.length];
+                const metricValue = metric.value !== null
+                  ? (metric.aggregated ? Number(metric.value).toFixed(2) : metric.value)
+                  : 'N/A';
+
+                return (
+                  <div
+                    key={metric.id}
+                    className={`dashboard-metric-row ${metric.aggregated ? 'aggregated' : ''}`}
+                    style={{
+                      borderColor: metric.aggregated ? color : 'rgba(0, 0, 0, 0.08)',
+                      borderLeftColor: color,
+                      background: metric.aggregated
+                        ? `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`
+                        : 'rgba(255, 255, 255, 0.92)',
+                    }}
+                  >
+                    <div className="dashboard-metric-main">
+                      {metric.aggregated && (
+                        <span className="dashboard-metric-badge">Aggregated</span>
                       )}
-                      <Typography 
-                        variant={metric.aggregated ? "h3" : "h4"} 
-                        component="div" 
-                        sx={{ 
-                          fontWeight: 'bold',
-                          color: metric.aggregated ? COLORS[index % COLORS.length] : 'inherit'
-                        }}
-                      >
-                        {metric.value !== null ? (metric.aggregated ? metric.value.toFixed(2) : metric.value) : 'N/A'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
+                      <div className="dashboard-metric-title">{metric.name}</div>
+                      {metric.description && (
+                        <div className="dashboard-metric-description">{metric.description}</div>
+                      )}
+                    </div>
 
-          {/* Charts */}
-          {simpleMetrics.length > 0 && (
-            <>
-              <Typography variant="h5" gutterBottom sx={{ mb: 2, mt: 4, fontWeight: 'bold', color: '#000000' }}>
-                Charts
-              </Typography>
-              
-              <Grid container spacing={3}>
-                {/* Bar Chart */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Value Comparison
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={barChartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          height={100}
-                          interval={0}
-                        />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="value" fill="#8884d8" name="Value">
-                          {barChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
+                    <div className="dashboard-metric-side">
+                      <div className="dashboard-metric-value" style={{ color: metric.aggregated ? color : '#111827' }}>
+                        {metricValue}
+                      </div>
 
-                {/* Pie Chart */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Metrics Distribution
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={pieChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
+                      <div className="dashboard-metric-actions">
+                        <button
+                          type="button"
+                          className="dashboard-icon-btn edit"
+                          onClick={() => handleEditMetric(metric)}
+                          aria-label={`Edit ${metric.name}`}
                         >
-                          {pieChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
+                          <EditIcon fontSize="small" />
+                        </button>
+                        <button
+                          type="button"
+                          className="dashboard-icon-btn delete"
+                          onClick={() => handleDeleteMetric(metric)}
+                          aria-label={`Delete ${metric.name}`}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-                {/* Line Chart */}
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Linear Trend
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={barChartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="name" 
-                          angle={-45} 
-                          textAnchor="end" 
-                          height={100}
-                          interval={0}
-                        />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#8884d8" 
-                          strokeWidth={2}
-                          name="Value"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Paper>
-                </Grid>
-              </Grid>
-            </>
-          )}
+          <div className="dashboard-section-card">
+            <div className="dashboard-section-header">
+              <div>
+                <div className="dashboard-section-title">Charts</div>
+                <div className="dashboard-section-subtitle">
+                  Explore comparison, distribution and trend views for simple metrics.
+                </div>
+              </div>
+            </div>
+
+            {simpleMetrics.length === 0 ? (
+              <div className="dashboard-message info">
+                Charts are available when the selected athlete has simple metrics with values.
+              </div>
+            ) : (
+              <div className="dashboard-charts-list">
+                <div className="dashboard-chart-card">
+                  <div className="dashboard-chart-title">Value Comparison</div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        interval={0}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#8884d8" name="Value">
+                        {barChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="dashboard-chart-card">
+                  <div className="dashboard-chart-title">Metrics Distribution</div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="dashboard-chart-card">
+                  <div className="dashboard-chart-title">Linear Trend</div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        interval={0}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#8884d8"
+                        strokeWidth={2}
+                        name="Value"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
-      </Container>
 
       {/* Modals */}
       <AddMetricModal
@@ -452,6 +446,6 @@ export default function Dashboard() {
         itemName={selectedMetric?.name}
         loading={deleteLoading}
       />
-    </Box>
+    </div>
   );
 }
