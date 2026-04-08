@@ -72,17 +72,17 @@ const AddEventModal = ({ open, onClose }) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      setValidationError('Informe o nome do evento.');
+      setValidationError('Enter the event name.');
       return;
     }
 
     if (!startDate) {
-      setValidationError('Informe a data do evento.');
+      setValidationError('Enter the event date.');
       return;
     }
 
     if (!selectedTeamIds.length) {
-      setValidationError('Selecione pelo menos uma turma.');
+      setValidationError('Select at least one team.');
       return;
     }
 
@@ -107,19 +107,19 @@ const AddEventModal = ({ open, onClose }) => {
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Criar Evento</DialogTitle>
+        <DialogTitle>Create Event</DialogTitle>
 
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               {(validationError || createEvent.isError) && (
                 <Alert severity="error">
-                  {validationError || createEvent.error?.response?.data?.detail || 'Erro ao criar evento.'}
+                  {validationError || 'Unable to create the event. Please try again.'}
                 </Alert>
               )}
 
               <TextField
-                label="Nome"
+                label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -129,7 +129,7 @@ const AddEventModal = ({ open, onClose }) => {
               />
 
               <TextField
-                label="Descrição"
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 multiline
@@ -139,7 +139,7 @@ const AddEventModal = ({ open, onClose }) => {
               />
 
               <TextField
-                label="Data"
+                label="Date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -150,16 +150,16 @@ const AddEventModal = ({ open, onClose }) => {
               />
 
               <FormControl fullWidth>
-                <InputLabel id="selected-teams-label">Turmas selecionadas</InputLabel>
+                <InputLabel id="selected-teams-label">Selected teams</InputLabel>
                 <OutlinedInput
-                  label="Turmas selecionadas"
+                  label="Selected teams"
                   value={selectedTeams.map((team) => team.name).join(', ')}
                   readOnly
                 />
                 <FormHelperText>
                   {selectedTeamIds.length
-                    ? `${selectedTeamIds.length} turma(s) vinculada(s)`
-                    : 'Nenhuma turma selecionada'}
+                    ? `${selectedTeamIds.length} team(s) linked`
+                    : 'No teams selected'}
                 </FormHelperText>
               </FormControl>
 
@@ -170,14 +170,14 @@ const AddEventModal = ({ open, onClose }) => {
                 onClick={() => setTeamsDialogOpen(true)}
                 disabled={createEvent.isPending}
               >
-                Adicionar turmas
+                Add teams
               </Button>
             </Box>
           </DialogContent>
 
           <DialogActions>
             <Button onClick={handleClose} disabled={createEvent.isPending}>
-              Cancelar
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -185,7 +185,7 @@ const AddEventModal = ({ open, onClose }) => {
               disabled={createEvent.isPending}
               startIcon={createEvent.isPending ? <CircularProgress size={16} /> : null}
             >
-              {createEvent.isPending ? 'Criando...' : 'Criar evento'}
+              {createEvent.isPending ? 'Creating...' : 'Create event'}
             </Button>
           </DialogActions>
         </form>
@@ -197,11 +197,11 @@ const AddEventModal = ({ open, onClose }) => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Adicionar turmas no evento</DialogTitle>
+        <DialogTitle>Add teams to event</DialogTitle>
         <DialogContent dividers>
           {!teams.length ? (
             <Typography variant="body2" color="text.secondary">
-              Nenhuma turma disponível.
+              No teams available.
             </Typography>
           ) : (
             <List sx={{ p: 0 }}>
@@ -217,7 +217,7 @@ const AddEventModal = ({ open, onClose }) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTeamsDialogOpen(false)}>Concluir</Button>
+          <Button onClick={() => setTeamsDialogOpen(false)}>Done</Button>
         </DialogActions>
       </Dialog>
     </>

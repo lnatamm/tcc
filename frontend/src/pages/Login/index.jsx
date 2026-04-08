@@ -24,7 +24,7 @@ const Login = () => {
     setError('');
 
     if (!username || !password) {
-      setError('Preencha usuário e senha.');
+      setError('Enter your username and password.');
       return;
     }
 
@@ -37,8 +37,8 @@ const Login = () => {
       login(response.data);
       navigate('/home');
     } catch (err) {
-      const message = err?.response?.data?.detail || 'Falha ao fazer login.';
-      setError(message);
+      console.error('Login failed:', err);
+      setError('Unable to sign in. Please try again.');
     }
   };
 
@@ -49,11 +49,11 @@ const Login = () => {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="login-label">
-            Usuário
+            Username
             <input
               className="login-input"
               type="text"
-              placeholder="Digite seu usuário"
+              placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -61,11 +61,11 @@ const Login = () => {
           </label>
 
           <label className="login-label">
-            Senha
+            Password
             <input
               className="login-input"
               type="password"
-              placeholder="Digite sua senha"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -73,7 +73,7 @@ const Login = () => {
           </label>
 
           <button className="login-submit" type="submit">
-            ENTRAR
+            SIGN IN
           </button>
 
           {error && <div className="login-error">{error}</div>}
@@ -87,7 +87,7 @@ const Login = () => {
                 navigate('/register');
               }}
             >
-              Crie sua conta
+              Create an account
             </a>
           </div>
         </form>

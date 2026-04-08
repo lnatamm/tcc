@@ -32,7 +32,7 @@ const CoachSelector = ({ value, onChange, disabled }) => {
   if (error) {
     return (
       <Alert severity="error">
-        Error loading coaches: {error.message}
+        Unable to load coaches. Please try again.
       </Alert>
     );
   }

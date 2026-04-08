@@ -49,7 +49,7 @@ const EditPhysicalTestModal = ({ open, onClose, physicalTest, userName }) => {
   }, [exercises]);
 
   const scheduledIso = useMemo(() => getScheduledStartDate(physicalTest), [physicalTest]);
-  const scheduledLabel = scheduledIso ? new Date(scheduledIso).toLocaleDateString('pt-BR') : 'Sem data';
+  const scheduledLabel = scheduledIso ? new Date(scheduledIso).toLocaleDateString('en-US') : 'No date';
 
   const canSubmit = !!physicalTestId && exerciseIds.length > 0 && !addMutation.isPending;
 
@@ -67,37 +67,37 @@ const EditPhysicalTestModal = ({ open, onClose, physicalTest, userName }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Editar Teste</DialogTitle>
+      <DialogTitle>Edit Test</DialogTitle>
       <DialogContent>
         {!physicalTestId && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Nenhum teste selecionado.
+            No test selected.
           </Alert>
         )}
 
         {exercisesError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            Erro ao carregar exercícios: {exercisesError.message}
+            Unable to load exercises. Please try again.
           </Alert>
         )}
 
         {addMutation.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            Erro ao adicionar exercícios: {addMutation.error?.message || 'Erro desconhecido'}
+            Unable to add exercises to the test. Please try again.
           </Alert>
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
-            {physicalTest?.name || 'Teste'} — Data: {scheduledLabel}
+            {physicalTest?.name || 'Test'} - Date: {scheduledLabel}
           </Typography>
 
           <FormControl fullWidth disabled={loadingExercises || !physicalTestId}>
-            <InputLabel>Adicionar exercícios</InputLabel>
+            <InputLabel>Add exercises</InputLabel>
             <Select
               multiple
               value={exerciseIds}
-              label="Adicionar exercícios"
+              label="Add exercises"
               onChange={(e) => setExerciseIds(e.target.value)}
               renderValue={(selected) =>
                 (selected || [])
@@ -116,9 +116,9 @@ const EditPhysicalTestModal = ({ open, onClose, physicalTest, userName }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Fechar</Button>
+        <Button onClick={onClose}>Close</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
-          Salvar
+          Save
         </Button>
       </DialogActions>
     </Dialog>

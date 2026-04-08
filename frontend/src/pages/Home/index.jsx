@@ -70,7 +70,7 @@ const Home = () => {
       <div className="home-header">
         <div className="user-greeting">
           <div className="user-avatar"></div>
-          <h2>Bom dia, {userName}</h2>
+          <h2>Good morning, {userName}</h2>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ const Home = () => {
       </div>
 
       <div className="teams-section">
-        <h3 className="section-title">TEAMS</h3>
+        <h3 className="section-title">Teams</h3>
         
         {loading && (
           <div className="loading-message">Loading teams...</div>
@@ -90,12 +90,12 @@ const Home = () => {
         
         {error && (
           <div className="error-message">
-            {error?.message || 'Unable to load teams. Please try again later.'}
+            Unable to load teams. Please try again later.
           </div>
         )}
         
         {!loading && !error && teams.length === 0 && (
-          <div className="empty-message">No teams found</div>
+          <div className="empty-message">No teams found.</div>
         )}
         
         {!loading && !error && teams.map((team) => (
@@ -153,12 +153,12 @@ const Home = () => {
                           handleViewRoutines(athlete);
                         }}
                       >
-                        view
+                        View
                       </button>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-athletes">No athletes enrolled</div>
+                  <div className="empty-athletes">No athletes enrolled.</div>
                 )}
               </div>
             )}

@@ -26,12 +26,12 @@ const Register = () => {
     setError('');
 
     if (!username || !name || !email || !password || !confirmPassword) {
-      setError('Preencha todos os campos.');
+      setError('Fill in all fields.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem.');
+      setError('Passwords do not match.');
       return;
     }
 
@@ -46,8 +46,8 @@ const Register = () => {
 
       navigate('/login');
     } catch (err) {
-      const message = err?.response?.data?.detail || 'Falha ao cadastrar.';
-      setError(message);
+      console.error('Registration failed:', err);
+      setError('Unable to create the account. Please try again.');
     }
   };
 
@@ -58,11 +58,11 @@ const Register = () => {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label className="login-label">
-            Usuário
+            Username
             <input
               className="login-input"
               type="text"
-              placeholder="Digite seu usuário"
+              placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -70,11 +70,11 @@ const Register = () => {
           </label>
 
           <label className="login-label">
-            Nome
+            Full Name
             <input
               className="login-input"
               type="text"
-              placeholder="Digite seu nome"
+              placeholder="Enter your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -82,11 +82,11 @@ const Register = () => {
           </label>
 
           <label className="login-label">
-            E-mail
+            Email
             <input
               className="login-input"
               type="email"
-              placeholder="Digite seu e-mail"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -94,11 +94,11 @@ const Register = () => {
           </label>
 
           <label className="login-label">
-            Senha
+            Password
             <input
               className="login-input"
               type="password"
-              placeholder="Digite sua senha"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -106,11 +106,11 @@ const Register = () => {
           </label>
 
           <label className="login-label">
-            Confirmar senha
+            Confirm Password
             <input
               className="login-input"
               type="password"
-              placeholder="Confirme sua senha"
+              placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -118,7 +118,7 @@ const Register = () => {
           </label>
 
           <button className="login-submit" type="submit">
-            CADASTRAR
+            REGISTER
           </button>
 
           {error && <div className="login-error">{error}</div>}
@@ -132,7 +132,7 @@ const Register = () => {
                 navigate('/login');
               }}
             >
-              Já tem conta? Faça login
+              Already have an account? Sign in
             </a>
           </div>
         </form>

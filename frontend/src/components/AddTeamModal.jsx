@@ -111,7 +111,7 @@ const AddTeamModal = ({ open, onClose }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
             {createTeam.isError && (
               <Alert severity="error">
-                Error creating team: {createTeam.error?.message || 'Please try again'}
+                Unable to create the team. Please try again.
               </Alert>
             )}
 

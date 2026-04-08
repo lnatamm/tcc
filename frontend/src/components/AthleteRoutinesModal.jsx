@@ -556,7 +556,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading exercises: {error.message}
+        Unable to load exercises. Please try again.
       </Alert>
     );
   }
@@ -813,7 +813,8 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
       setNewRoutineName('');
       setShowCreateForm(false);
     } catch (err) {
-      setCreateError(err.message || 'Failed to create routine');
+      console.error('Failed to create routine:', err);
+      setCreateError('Failed to create routine. Please try again.');
     }
   };
 
@@ -928,7 +929,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
         
         {error && (
           <Alert severity="error" sx={{ m: 3 }}>
-            Error loading routines: {error.message}
+            Unable to load routines. Please try again.
           </Alert>
         )}
         

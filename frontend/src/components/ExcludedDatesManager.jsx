@@ -32,7 +32,7 @@ const ExcludedDatesManager = ({ excludedDates = [], onAdd, onRemove, disabled = 
 
   const formatDate = (dateString) => {
     const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR', { 
+    return date.toLocaleDateString('en-US', { 
       weekday: 'short', 
       year: 'numeric', 
       month: 'short', 

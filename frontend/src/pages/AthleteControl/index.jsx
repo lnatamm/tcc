@@ -7,6 +7,12 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddAthleteModal from '../../components/AddAthleteModal';
 
+const getAthleteStatusLabel = (status) => {
+  if (status === 'Ativo') return 'Active';
+  if (status === 'Inativo') return 'Inactive';
+  return status || 'Active';
+};
+
 const AthleteControl = () => {
   const navigate = useNavigate();
   const { data: teams = [] } = useTeamsWithAthletes();
@@ -41,6 +47,7 @@ const AthleteControl = () => {
       teamName: (athleteTeams.get(athlete.id) || ['—']).join(', '),
       sportName: athlete.sportName || '—',
       status: athlete.status || 'Ativo',
+      statusLabel: getAthleteStatusLabel(athlete.status || 'Ativo'),
     }));
   }, [athletes, athleteTeams]);
 
@@ -130,19 +137,19 @@ const AthleteControl = () => {
   return (
     <div className="athlete-control">
       <div className="athlete-summary-card">
-        <div className="athlete-summary-title">Controle de alunos e turmas</div>
+        <div className="athlete-summary-title">Athlete and Team Management</div>
 
         <div className="athlete-summary-stats">
           <div className="stat-item">
-            <div className="stat-label">Total de alunos</div>
+            <div className="stat-label">Total athletes</div>
             <div className="stat-value">{totalStudents}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">Alunos ativos</div>
+            <div className="stat-label">Active athletes</div>
             <div className="stat-value">{activeStudents}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">Total de turmas</div>
+            <div className="stat-label">Total teams</div>
             <div className="stat-value">{totalTeams}</div>
           </div>
         </div>
@@ -157,7 +164,7 @@ const AthleteControl = () => {
             className="search-input"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Pesquise por nome ou ID do atleta"
+            placeholder="Search by athlete name or ID"
           />
           <IconButton
             className="filter-button"
@@ -166,7 +173,7 @@ const AthleteControl = () => {
               setFiltersOpen(true);
               setFiltersAnchor(event.currentTarget);
             }}
-            aria-label="Filtros"
+            aria-label="Filters"
           >
             <FilterListIcon fontSize="small" />
           </IconButton>
@@ -187,27 +194,27 @@ const AthleteControl = () => {
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
-                    <option value="all">Todos</option>
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
+                    <option value="all">All</option>
+                    <option value="Ativo">Active</option>
+                    <option value="Inativo">Inactive</option>
                   </select>
                 </label>
 
                 <label className="filter-label">
-                  Turma
+                  Team
                   <input
                     value={filterTeam}
                     onChange={(e) => setFilterTeam(e.target.value)}
-                    placeholder="Nome da turma"
+                    placeholder="Team name"
                   />
                 </label>
 
                 <label className="filter-label">
-                  Modalidade
+                  Sport
                   <input
                     value={filterSport}
                     onChange={(e) => setFilterSport(e.target.value)}
-                    placeholder="Nome da modalidade"
+                    placeholder="Sport name"
                   />
                 </label>
 
@@ -220,7 +227,7 @@ const AthleteControl = () => {
                     setFilterSport('');
                   }}
                 >
-                  Limpar filtros
+                  Clear filters
                 </button>
               </div>
             </Box>
@@ -232,7 +239,7 @@ const AthleteControl = () => {
           className="add-athlete-btn"
           onClick={() => setAddModalOpen(true)}
         >
-          Adicionar aluno
+          Add athlete
         </button>
       </section>
 
@@ -240,9 +247,9 @@ const AthleteControl = () => {
         <table className="athlete-table">
           <thead>
             <tr>
-              <th>ALUNO</th>
-              <th>TURMA</th>
-              <th>MODALIDADE</th>
+              <th>ATHLETE</th>
+              <th>TEAM</th>
+              <th>SPORT</th>
               <th>STATUS</th>
               <th />
             </tr>
@@ -251,19 +258,19 @@ const AthleteControl = () => {
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="empty-row">
-                  Carregando dados...
+                  Loading data...
                 </td>
               </tr>
             ) : error ? (
               <tr>
                 <td colSpan={5} className="empty-row">
-                  Falha ao carregar dados. Tente novamente.
+                  Unable to load data. Please try again.
                 </td>
               </tr>
             ) : filteredAthletes.length === 0 ? (
               <tr>
                 <td colSpan={5} className="empty-row">
-                  Nenhum aluno encontrado.
+                  No athletes found.
                 </td>
               </tr>
             ) : (
@@ -275,7 +282,7 @@ const AthleteControl = () => {
                     </Avatar>
                     <div className="student-text">
                       <div className="student-name">{athlete.name}</div>
-                      <div className="student-sub">ID do aluno: {athlete.id}</div>
+                      <div className="student-sub">Athlete ID: {athlete.id}</div>
                     </div>
                   </td>
                   <td>{athlete.teamName}</td>
@@ -286,7 +293,7 @@ const AthleteControl = () => {
                         athlete.status === 'Ativo' ? 'active' : 'inactive'
                       }`}
                     >
-                      {athlete.status}
+                      {athlete.statusLabel}
                     </span>
                   </td>
                   <td>
@@ -294,7 +301,7 @@ const AthleteControl = () => {
                       className="view-athlete-btn"
                       onClick={() => navigate(`/athletes/${athlete.id}`)}
                     >
-                      Visualizar aluno
+                      View athlete
                     </button>
                   </td>
                 </tr>

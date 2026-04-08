@@ -72,22 +72,22 @@ const RoutinesPage = () => {
   return (
     <div className="routines-page">
       <div className="routines-summary-card">
-        <div className="routines-summary-title">Rotinas de Treino</div>
+        <div className="routines-summary-title">Training Routines</div>
         <div className="routines-summary-subtitle">
-          Consulte e abra o painel de rotinas dos atletas em uma única lista.
+          Review and open each athlete's routine panel from a single list.
         </div>
 
         <div className="routines-summary-stats">
           <div className="routines-stat-item">
-            <div className="routines-stat-label">Total de atletas</div>
+            <div className="routines-stat-label">Total athletes</div>
             <div className="routines-stat-value">{athletes.length}</div>
           </div>
           <div className="routines-stat-item">
-            <div className="routines-stat-label">Resultados filtrados</div>
+            <div className="routines-stat-label">Filtered results</div>
             <div className="routines-stat-value">{filteredAthletes.length}</div>
           </div>
           <div className="routines-stat-item">
-            <div className="routines-stat-label">Rotinas abertas</div>
+            <div className="routines-stat-label">Open routine panels</div>
             <div className="routines-stat-value">{selectedAthlete ? 1 : 0}</div>
           </div>
         </div>
@@ -101,7 +101,7 @@ const RoutinesPage = () => {
               className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Pesquise por nome do atleta"
+              placeholder="Search by athlete name"
             />
           </div>
 
@@ -111,13 +111,13 @@ const RoutinesPage = () => {
             onClick={() => setSearchTerm('')}
             disabled={!searchTerm}
           >
-            Limpar busca
+            Clear search
           </button>
         </section>
 
         {error && (
           <div className="routines-message error">
-            Erro ao carregar atletas: {error.message}
+            Unable to load athletes. Please try again.
           </div>
         )}
 
@@ -125,9 +125,9 @@ const RoutinesPage = () => {
           <table className="routines-table">
             <thead>
               <tr>
-                <th>ALUNO</th>
-                <th>PERFIL</th>
-                <th>ROTINAS</th>
+                <th>ATHLETE</th>
+                <th>PROFILE</th>
+                <th>ROUTINES</th>
                 <th />
               </tr>
             </thead>
@@ -135,21 +135,21 @@ const RoutinesPage = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="empty-row">
-                    Carregando atletas...
+                    Loading athletes...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
                   <td colSpan={4} className="empty-row">
-                    Falha ao carregar atletas. Tente novamente.
+                    Unable to load athletes. Please try again.
                   </td>
                 </tr>
               ) : filteredAthletes.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="empty-row">
                     {searchTerm
-                      ? 'Nenhum atleta encontrado para a busca informada.'
-                      : 'Nenhum atleta disponível para exibir rotinas.'}
+                      ? 'No athletes matched your search.'
+                      : 'No athletes are available to display routines.'}
                   </td>
                 </tr>
               ) : (
@@ -162,15 +162,15 @@ const RoutinesPage = () => {
                         </div>
                         <div className="athlete-text">
                           <div className="athlete-name">{athlete.name}</div>
-                          <div className="athlete-sub">ID do atleta: {athlete.id}</div>
+                          <div className="athlete-sub">Athlete ID: {athlete.id}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span className="routine-badge">Atleta</span>
+                      <span className="routine-badge">Athlete</span>
                     </td>
                     <td>
-                      <span className="routine-summary">Abrir painel semanal de rotinas</span>
+                      <span className="routine-summary">Open the weekly routine panel</span>
                     </td>
                     <td>
                       <button
@@ -179,7 +179,7 @@ const RoutinesPage = () => {
                         onClick={() => handleViewRoutines(athlete)}
                       >
                         <CalendarTodayIcon fontSize="small" />
-                        Visualizar rotinas
+                        View routines
                       </button>
                     </td>
                   </tr>

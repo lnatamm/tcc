@@ -28,7 +28,7 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
     const sanitizedAthleteName = athleteName.trim();
 
     if (!sanitizedAthleteName) {
-      setError('Informe o nome do atleta.');
+      setError('Enter the athlete name.');
       return;
     }
 
@@ -39,7 +39,7 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Adicionar aluno</DialogTitle>
+      <DialogTitle>Add athlete</DialogTitle>
       <DialogContent>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -50,8 +50,8 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
         <TextField
           autoFocus
           fullWidth
-          label="Nome do atleta"
-          placeholder="Digite o nome do atleta"
+          label="Athlete name"
+          placeholder="Enter the athlete name"
           value={athleteName}
           onChange={(event) => {
             setAthleteName(event.target.value);
@@ -70,7 +70,7 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={loading}>
-          Cancelar
+          Cancel
         </Button>
         <Button
           variant="contained"
@@ -78,7 +78,7 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
           disabled={loading}
           startIcon={loading && <CircularProgress size={16} />}
         >
-          {loading ? 'Abrindo...' : 'Continuar'}
+          {loading ? 'Opening...' : 'Continue'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -2,12 +2,12 @@ import React from 'react';
 import { useCreateTurma, useUpdateTurma, useDeleteTurma } from '../hooks/useApi';
 
 /**
- * Exemplo de como usar React Query Mutations
+ * Example of how to use React Query mutations
  * 
- * Este componente demonstra:
- * - useCreateTurma - Criar nova turma
- * - useUpdateTurma - Atualizar turma existente
- * - useDeleteTurma - Deletar turma
+ * This component demonstrates:
+ * - useCreateTurma - Create a new team
+ * - useUpdateTurma - Update an existing team
+ * - useDeleteTurma - Delete a team
  */
 
 const ExemploMutations = () => {
@@ -23,10 +23,10 @@ const ExemploMutations = () => {
       foto_path: "/images/turma.jpg"
     }, {
       onSuccess: (data) => {
-        console.log('Turma criada:', data);
+        console.log('Team created:', data);
       },
       onError: (error) => {
-        console.error('Erro ao criar turma:', error);
+        console.error('Error creating team:', error);
       }
     });
   };
@@ -35,14 +35,14 @@ const ExemploMutations = () => {
     updateTurma.mutate({
       id: turmaId,
       data: {
-        nome: "Turma Atualizada"
+        nome: "Updated Team"
       }
     }, {
       onSuccess: (data) => {
-        console.log('Turma atualizada:', data);
+        console.log('Team updated:', data);
       },
       onError: (error) => {
-        console.error('Erro ao atualizar turma:', error);
+        console.error('Error updating team:', error);
       }
     });
   };
@@ -50,41 +50,41 @@ const ExemploMutations = () => {
   const handleDeletarTurma = (turmaId) => {
     deleteTurma.mutate(turmaId, {
       onSuccess: () => {
-        console.log('Turma deletada com sucesso');
+        console.log('Team deleted successfully');
       },
       onError: (error) => {
-        console.error('Erro ao deletar turma:', error);
+        console.error('Error deleting team:', error);
       }
     });
   };
 
   return (
     <div>
-      <h2>Exemplo de Mutations</h2>
+      <h2>Mutation Example</h2>
       
       <button 
         onClick={handleCriarTurma}
         disabled={createTurma.isPending}
       >
-        {createTurma.isPending ? 'Criando...' : 'Criar Turma'}
+        {createTurma.isPending ? 'Creating...' : 'Create Team'}
       </button>
 
       <button 
         onClick={() => handleAtualizarTurma(1)}
         disabled={updateTurma.isPending}
       >
-        {updateTurma.isPending ? 'Atualizando...' : 'Atualizar Turma'}
+        {updateTurma.isPending ? 'Updating...' : 'Update Team'}
       </button>
 
       <button 
         onClick={() => handleDeletarTurma(1)}
         disabled={deleteTurma.isPending}
       >
-        {deleteTurma.isPending ? 'Deletando...' : 'Deletar Turma'}
+        {deleteTurma.isPending ? 'Deleting...' : 'Delete Team'}
       </button>
 
       {createTurma.isError && (
-        <p style={{ color: 'red' }}>Erro: {createTurma.error.message}</p>
+        <p style={{ color: 'red' }}>Error: {createTurma.error.message}</p>
       )}
     </div>
   );

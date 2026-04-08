@@ -33,7 +33,7 @@ const SportSelector = ({ value, onChange, disabled }) => {
   if (error) {
     return (
       <Alert severity="error">
-        Error loading sports: {error.message}
+        Unable to load sports. Please try again.
       </Alert>
     );
   }

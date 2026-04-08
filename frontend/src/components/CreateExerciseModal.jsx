@@ -108,7 +108,8 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
       }
       onClose();
     } catch (err) {
-      setErrors({ submit: err.message || 'Failed to create exercise' });
+      console.error('Failed to create exercise:', err);
+      setErrors({ submit: 'Failed to create exercise. Please try again.' });
     } finally {
       setSubmitting(false);
     }

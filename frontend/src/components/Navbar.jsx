@@ -33,7 +33,7 @@ const Navbar = () => {
     <aside className="sidebar">
       <div className="sidebar-profile">
         <div className="sidebar-avatar">{user?.nome ? user.nome.charAt(0).toUpperCase() : 'U'}</div>
-        <div className="sidebar-name">{user?.nome || 'Meu perfil'}</div>
+        <div className="sidebar-name">{user?.nome || 'My Profile'}</div>
       </div>
 
       <nav className="sidebar-nav">
@@ -50,7 +50,7 @@ const Navbar = () => {
           className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
         >
           <TodayIcon sx={{ fontSize: 20 }} />
-          <span>Rotinas e exercícios</span>
+          <span>Routines & Exercises</span>
         </Link>
 
         <Link
@@ -58,7 +58,7 @@ const Navbar = () => {
           className={`sidebar-link ${location.pathname === '/today' ? 'active' : ''}`}
         >
           <CalendarTodayIcon sx={{ fontSize: 20 }} />
-          <span>Hoje</span>
+          <span>Today</span>
         </Link>
 
         <Link
@@ -74,7 +74,7 @@ const Navbar = () => {
           className={`sidebar-link ${location.pathname === '/physical-tests' ? 'active' : ''}`}
         >
           <FactCheckIcon sx={{ fontSize: 20 }} />
-          <span>Testes Físicos</span>
+          <span>Physical Tests</span>
         </Link>
 
         <Link
@@ -82,7 +82,7 @@ const Navbar = () => {
           className={`sidebar-link ${location.pathname === '/events' ? 'active' : ''}`}
         >
           <EventIcon sx={{ fontSize: 20 }} />
-          <span>Eventos</span>
+          <span>Events</span>
         </Link>
 
         <Link
@@ -90,13 +90,13 @@ const Navbar = () => {
           className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
         >
           <PersonIcon sx={{ fontSize: 20 }} />
-          <span>Alunos e turmas</span>
+          <span>Athletes & Teams</span>
         </Link>
       </nav>
 
       <div className="sidebar-footer">
         <button className="sidebar-logout" type="button" onClick={handleLogout}>
-          Sair da conta
+          Sign Out
         </button>
       </div>
     </aside>

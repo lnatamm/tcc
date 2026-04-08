@@ -7,10 +7,10 @@ import { useEvents } from '../../hooks/useApi';
 import AddEventModal from '../../components/AddEventModal';
 
 const formatDate = (dateIso) => {
-  if (!dateIso) return 'Sem data';
+  if (!dateIso) return 'No date';
   const d = new Date(dateIso);
-  if (Number.isNaN(d.getTime())) return 'Sem data';
-  return d.toLocaleDateString('pt-BR');
+  if (Number.isNaN(d.getTime())) return 'No date';
+  return d.toLocaleDateString('en-US');
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -64,18 +64,18 @@ const EventsPage = () => {
   return (
     <div className="events-page">
       <div className="events-summary-card">
-        <div className="events-summary-title">Gerenciamento de Eventos</div>
+        <div className="events-summary-title">Event Management</div>
         <div className="events-summary-stats">
           <div className="stat-item">
-            <div className="stat-label">Total de eventos</div>
+            <div className="stat-label">Total events</div>
             <div className="stat-value">{totalEvents}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">Próximos eventos</div>
+            <div className="stat-label">Upcoming events</div>
             <div className="stat-value">{upcomingEvents}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">Turmas vinculadas</div>
+            <div className="stat-label">Linked teams</div>
             <div className="stat-value">{totalTeamsLinked}</div>
           </div>
         </div>
@@ -89,7 +89,7 @@ const EventsPage = () => {
               className="search-input"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquise por nome ou descrição do evento"
+              placeholder="Search by event name or description"
             />
           </div>
           <button
@@ -97,7 +97,7 @@ const EventsPage = () => {
             className="add-event-btn"
             onClick={() => setCreateOpen(true)}
           >
-            Criar Evento
+            Create Event
           </button>
         </section>
 
@@ -105,23 +105,23 @@ const EventsPage = () => {
           <table className="events-table">
             <thead>
               <tr>
-                <th>EVENTO</th>
-                <th>DATA</th>
-                <th>TURMAS</th>
+                <th>EVENT</th>
+                <th>DATE</th>
+                <th>TEAMS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">Carregando dados...</td>
+                  <td colSpan={3} className="empty-row">Loading data...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">Falha ao carregar dados. Tente novamente.</td>
+                  <td colSpan={3} className="empty-row">Unable to load data. Please try again.</td>
                 </tr>
               ) : filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">Nenhum evento encontrado.</td>
+                  <td colSpan={3} className="empty-row">No events found.</td>
                 </tr>
               ) : (
                 pagedEvents.map((event) => (

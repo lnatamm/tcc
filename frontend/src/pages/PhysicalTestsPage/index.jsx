@@ -39,18 +39,18 @@ const ITEMS_PER_PAGE = 10;
 
 const getStatusMeta = (physicalTest) => {
   if (physicalTest.isExpired) {
-    return { label: 'Expirado', className: 'expired' };
+    return { label: 'Expired', className: 'expired' };
   }
 
   if (typeof physicalTest.daysDiff === 'number') {
     if (physicalTest.daysDiff === 0) {
-      return { label: 'Hoje', className: 'today' };
+      return { label: 'Today', className: 'today' };
     }
 
-    return { label: `Faltam ${physicalTest.daysDiff} dias`, className: 'upcoming' };
+    return { label: `${physicalTest.daysDiff} day${physicalTest.daysDiff === 1 ? '' : 's'} left`, className: 'upcoming' };
   }
 
-  return { label: 'Sem data', className: 'unscheduled' };
+  return { label: 'No date', className: 'unscheduled' };
 };
 
 const PhysicalTestsPage = () => {
@@ -143,22 +143,22 @@ const PhysicalTestsPage = () => {
   return (
     <div className="physical-tests-page">
       <div className="physical-tests-summary-card">
-        <div className="physical-tests-summary-title">Testes Físicos</div>
+        <div className="physical-tests-summary-title">Physical Tests</div>
         <div className="physical-tests-summary-subtitle">
-          Agende e acompanhe testes por aluno em um único painel.
+          Schedule and track tests for each athlete from one panel.
         </div>
 
         <div className="physical-tests-summary-stats">
           <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Total de testes</div>
+            <div className="physical-tests-stat-label">Total tests</div>
             <div className="physical-tests-stat-value">{athleteId ? normalizedTests.length : 0}</div>
           </div>
           <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Testes ativos</div>
+            <div className="physical-tests-stat-label">Active tests</div>
             <div className="physical-tests-stat-value">{athleteId ? activeCount : 0}</div>
           </div>
           <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Testes expirados</div>
+            <div className="physical-tests-stat-label">Expired tests</div>
             <div className="physical-tests-stat-value">{athleteId ? expiredCount : 0}</div>
           </div>
         </div>
@@ -168,7 +168,7 @@ const PhysicalTestsPage = () => {
         <section className="physical-tests-controls">
           <div className="physical-tests-controls-group">
             <label className="physical-test-field">
-              <span className="physical-test-field-label">Aluno</span>
+              <span className="physical-test-field-label">Athlete</span>
               <select
                 className="physical-test-select"
                 value={selectedAthleteId}
@@ -176,7 +176,7 @@ const PhysicalTestsPage = () => {
                 disabled={loadingAthletes}
               >
                 <option value="">
-                  {loadingAthletes ? 'Carregando alunos...' : 'Selecione um aluno'}
+                  {loadingAthletes ? 'Loading athletes...' : 'Select an athlete'}
                 </option>
                 {athletes.map((athlete) => (
                   <option key={athlete.id} value={String(athlete.id)}>
@@ -187,7 +187,7 @@ const PhysicalTestsPage = () => {
             </label>
 
             <label className="physical-test-field">
-              <span className="physical-test-field-label">Filtros</span>
+              <span className="physical-test-field-label">Filters</span>
               <span className="physical-test-toggle">
                 <input
                   type="checkbox"
@@ -195,7 +195,7 @@ const PhysicalTestsPage = () => {
                   onChange={(e) => handleToggleExpired(e.target.checked)}
                   disabled={!athleteId}
                 />
-                Mostrar expirados
+                Show expired
               </span>
             </label>
           </div>
@@ -208,36 +208,36 @@ const PhysicalTestsPage = () => {
           >
             <AddIcon fontSize="small" />
             {' '}
-            Agendar Teste
+            Schedule Test
           </button>
         </section>
 
         {athletesError && (
           <div className="physical-tests-message error">
-            Erro ao carregar alunos: {athletesError.message}
+            Unable to load athletes. Please try again.
           </div>
         )}
 
         {!athleteId ? (
           <div className="physical-tests-empty-state">
-            <div className="physical-tests-empty-title">Selecione um aluno</div>
+            <div className="physical-tests-empty-title">Select an athlete</div>
             <div className="physical-tests-empty-text">
-              Escolha um aluno para ver e agendar testes físicos.
+              Choose an athlete to review and schedule physical tests.
             </div>
           </div>
         ) : (
           <section className="physical-tests-table-wrapper">
             {error && (
               <div className="physical-tests-message error">
-                Erro ao carregar testes: {error.message}
+                Unable to load physical tests. Please try again.
               </div>
             )}
 
             <table className="physical-tests-table">
               <thead>
                 <tr>
-                  <th>TESTE</th>
-                  <th>DATA</th>
+                  <th>TEST</th>
+                  <th>DATE</th>
                   <th>STATUS</th>
                   <th />
                 </tr>
@@ -246,28 +246,28 @@ const PhysicalTestsPage = () => {
                 {isLoading ? (
                   <tr>
                     <td colSpan={4} className="empty-row">
-                      Carregando dados...
+                      Loading data...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
                     <td colSpan={4} className="empty-row">
-                      Falha ao carregar dados. Tente novamente.
+                      Unable to load data. Please try again.
                     </td>
                   </tr>
                 ) : visibleTests.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="empty-row">
                       {showExpired
-                        ? 'Não há testes para este aluno.'
-                        : 'Não há testes futuros para este aluno.'}
+                        ? 'There are no tests for this athlete.'
+                        : 'There are no upcoming tests for this athlete.'}
                     </td>
                   </tr>
                 ) : (
                   pagedTests.map((test) => {
                     const scheduledLabel = test.scheduledIso
-                      ? new Date(test.scheduledIso).toLocaleDateString('pt-BR')
-                      : 'Sem data';
+                      ? new Date(test.scheduledIso).toLocaleDateString('en-US')
+                      : 'No date';
                     const statusMeta = getStatusMeta(test);
 
                     return (
@@ -280,7 +280,7 @@ const PhysicalTestsPage = () => {
                             <div className="physical-test-text">
                               <div className="physical-test-name">{test.name}</div>
                               <div className="physical-test-description">
-                                {test.description || selectedAthlete?.name || 'Sem descrição'}
+                                {test.description || selectedAthlete?.name || 'No description'}
                               </div>
                             </div>
                           </div>
@@ -301,7 +301,7 @@ const PhysicalTestsPage = () => {
                           >
                             <EditIcon fontSize="small" />
                             {' '}
-                            Editar
+                            Edit
                           </button>
                         </td>
                       </tr>

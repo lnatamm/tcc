@@ -61,36 +61,36 @@ const SchedulePhysicalTestModal = ({ open, onClose, athleteId, userName }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Agendar Teste Físico</DialogTitle>
+      <DialogTitle>Schedule Physical Test</DialogTitle>
       <DialogContent>
         {!athleteId && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Selecione um aluno antes de agendar.
+            Select an athlete before scheduling.
           </Alert>
         )}
 
         {exercisesError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            Erro ao carregar exercícios: {exercisesError.message}
+            Unable to load exercises. Please try again.
           </Alert>
         )}
 
         {scheduleMutation.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            Erro ao agendar teste: {scheduleMutation.error?.message || 'Erro desconhecido'}
+            Unable to schedule the test. Please try again.
           </Alert>
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
-            label="Nome"
+            label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
           />
 
           <TextField
-            label="Descrição"
+            label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
@@ -99,7 +99,7 @@ const SchedulePhysicalTestModal = ({ open, onClose, athleteId, userName }) => {
           />
 
           <TextField
-            label="Data do teste"
+            label="Test date"
             type="date"
             value={scheduledDate}
             onChange={(e) => setScheduledDate(e.target.value)}
@@ -108,11 +108,11 @@ const SchedulePhysicalTestModal = ({ open, onClose, athleteId, userName }) => {
           />
 
           <FormControl fullWidth disabled={loadingExercises}>
-            <InputLabel>Exercícios</InputLabel>
+            <InputLabel>Exercises</InputLabel>
             <Select
               multiple
               value={exerciseIds}
-              label="Exercícios"
+              label="Exercises"
               onChange={(e) => setExerciseIds(e.target.value)}
               renderValue={(selected) =>
                 (selected || [])
@@ -130,14 +130,14 @@ const SchedulePhysicalTestModal = ({ open, onClose, athleteId, userName }) => {
           </FormControl>
 
           <Typography variant="caption" color="text.secondary">
-            O teste será agendado para a data escolhida, e todos os exercícios do teste compartilharão essa data.
+            The test will be scheduled for the selected date, and every exercise in the test will share that date.
           </Typography>
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
-          Agendar
+          Schedule
         </Button>
       </DialogActions>
     </Dialog>

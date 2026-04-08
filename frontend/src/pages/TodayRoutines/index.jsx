@@ -139,7 +139,7 @@ const TodayRoutines = () => {
           <div className="today-content-card">
             {error && (
               <div className="today-message error">
-                Error loading exercises: {error.message}
+                Unable to load exercises. Please try again.
               </div>
             )}
 
