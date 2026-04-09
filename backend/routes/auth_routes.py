@@ -27,12 +27,22 @@ def login(user_login: UserLogin):
         if update_result.data and len(update_result.data) > 0:
             updated_access = update_result.data[0].get("ultimo_acesso")
 
+        user_type_name = None
+        try:
+            type_result = integration.get_user_type_by_id(user_record.get("id_user_type"))
+            if type_result.data:
+                user_type_name = (type_result.data[0].get("name") or "").strip().lower() or None
+        except Exception:
+            # Non-fatal: keep backward compatibility even if lookup fails
+            user_type_name = None
+
         return {
             "id": user_record.get("id"),
             "usuario": user_record.get("usuario"),
             "email": user_record.get("email"),
             "nome": user_record.get("nome"),
             "id_user_type": user_record.get("id_user_type"),
+            "user_type_name": user_type_name,
             "ultimo_acesso": updated_access or user_record.get("ultimo_acesso"),
         }
     except HTTPException:
@@ -128,6 +138,7 @@ def register(user_register: UserRegister):
             "email": created.get("email"),
             "nome": created.get("nome"),
             "id_user_type": created.get("id_user_type"),
+            "user_type_name": type_name,
             "ultimo_acesso": created.get("ultimo_acesso"),
         }
     except HTTPException:

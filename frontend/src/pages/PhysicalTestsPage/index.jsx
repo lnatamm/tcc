@@ -5,9 +5,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 
 import { useAuth } from '../../context/AuthContext';
-import { useAthletes, usePhysicalTestsByAthlete } from '../../hooks/useApi';
+import { useAthletes, useMyAthlete, usePhysicalTestsByAthlete } from '../../hooks/useApi';
 import SchedulePhysicalTestModal from '../../components/SchedulePhysicalTestModal';
 import EditPhysicalTestModal from '../../components/EditPhysicalTestModal';
+import PhysicalTestDetailsModal from '../../components/PhysicalTestDetailsModal';
 
 const toMidnightDate = (dt) => {
   const d = new Date(dt);
@@ -57,15 +58,24 @@ const PhysicalTestsPage = () => {
   const { user } = useAuth();
   const userName = user?.nome || 'Derek';
 
+  const isAthlete = String(user?.user_type_name || '').trim().toLowerCase() === 'athlete';
+
   const [selectedAthleteId, setSelectedAthleteId] = useState('');
   const [showExpiredByAthlete, setShowExpiredByAthlete] = useState({});
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsTest, setDetailsTest] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: athletes = [], isLoading: loadingAthletes, error: athletesError } = useAthletes();
-  const athleteId = selectedAthleteId ? Number(selectedAthleteId) : null;
+  const { data: myAthlete, isLoading: loadingMyAthlete, error: myAthleteError } = useMyAthlete();
+  const { data: athletes = [], isLoading: loadingAthletes, error: athletesError } = useAthletes(!isAthlete);
+
+  const athleteId = isAthlete
+    ? (myAthlete?.id ?? null)
+    : (selectedAthleteId ? Number(selectedAthleteId) : null);
+
   const { data: tests = [], isLoading, error } = usePhysicalTestsByAthlete(athleteId);
 
   const showExpired = !!showExpiredByAthlete[athleteId];
@@ -89,10 +99,10 @@ const PhysicalTestsPage = () => {
     setCurrentPage(1);
   }, [athleteId, showExpired, visibleTests.length]);
 
-  const selectedAthlete = useMemo(
-    () => athletes.find((athlete) => athlete.id === athleteId) || null,
-    [athleteId, athletes],
-  );
+  const selectedAthlete = useMemo(() => {
+    if (isAthlete) return myAthlete || null;
+    return athletes.find((athlete) => athlete.id === athleteId) || null;
+  }, [athleteId, athletes, isAthlete, myAthlete]);
 
   const expiredCount = normalizedTests.filter((test) => test.isExpired).length;
   const activeCount = normalizedTests.filter((test) => !test.isExpired).length;
@@ -140,12 +150,26 @@ const PhysicalTestsPage = () => {
     setSelectedTest(null);
   };
 
+  const handleOpenDetails = (test) => {
+    setDetailsTest(test);
+    setDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setDetailsTest(null);
+  };
+
+  const shouldShowEmptyState = !athleteId && !(isAthlete && (loadingMyAthlete || myAthleteError));
+
   return (
     <div className="physical-tests-page">
       <div className="physical-tests-summary-card">
         <div className="physical-tests-summary-title">Testes Físicos</div>
         <div className="physical-tests-summary-subtitle">
-          Agende e acompanhe testes por aluno em um único painel.
+          {isAthlete
+            ? 'Acompanhe seus testes físicos em um único painel.'
+            : 'Agende e acompanhe testes por aluno em um único painel.'}
         </div>
 
         <div className="physical-tests-summary-stats">
@@ -167,24 +191,26 @@ const PhysicalTestsPage = () => {
       <div className="physical-tests-card">
         <section className="physical-tests-controls">
           <div className="physical-tests-controls-group">
-            <label className="physical-test-field">
-              <span className="physical-test-field-label">Aluno</span>
-              <select
-                className="physical-test-select"
-                value={selectedAthleteId}
-                onChange={(e) => setSelectedAthleteId(e.target.value)}
-                disabled={loadingAthletes}
-              >
-                <option value="">
-                  {loadingAthletes ? 'Carregando alunos...' : 'Selecione um aluno'}
-                </option>
-                {athletes.map((athlete) => (
-                  <option key={athlete.id} value={String(athlete.id)}>
-                    {athlete.name}
+            {!isAthlete && (
+              <label className="physical-test-field">
+                <span className="physical-test-field-label">Aluno</span>
+                <select
+                  className="physical-test-select"
+                  value={selectedAthleteId}
+                  onChange={(e) => setSelectedAthleteId(e.target.value)}
+                  disabled={loadingAthletes}
+                >
+                  <option value="">
+                    {loadingAthletes ? 'Carregando alunos...' : 'Selecione um aluno'}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {athletes.map((athlete) => (
+                    <option key={athlete.id} value={String(athlete.id)}>
+                      {athlete.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="physical-test-field">
               <span className="physical-test-field-label">Filtros</span>
@@ -200,32 +226,53 @@ const PhysicalTestsPage = () => {
             </label>
           </div>
 
-          <button
-            type="button"
-            className="add-physical-test-btn"
-            onClick={() => setScheduleOpen(true)}
-            disabled={!athleteId}
-          >
-            <AddIcon fontSize="small" />
-            {' '}
-            Agendar Teste
-          </button>
+          {!isAthlete && (
+            <button
+              type="button"
+              className="add-physical-test-btn"
+              onClick={() => setScheduleOpen(true)}
+              disabled={!athleteId}
+            >
+              <AddIcon fontSize="small" />
+              {' '}
+              Agendar Teste
+            </button>
+          )}
         </section>
 
-        {athletesError && (
+        {!isAthlete && athletesError && (
           <div className="physical-tests-message error">
             Erro ao carregar alunos: {athletesError.message}
           </div>
         )}
 
-        {!athleteId ? (
+        {isAthlete && loadingMyAthlete && (
           <div className="physical-tests-empty-state">
-            <div className="physical-tests-empty-title">Selecione um aluno</div>
+            <div className="physical-tests-empty-title">Carregando...</div>
             <div className="physical-tests-empty-text">
-              Escolha um aluno para ver e agendar testes físicos.
+              Carregando seu perfil de atleta.
             </div>
           </div>
-        ) : (
+        )}
+
+        {isAthlete && myAthleteError && (
+          <div className="physical-tests-message error">
+            Não foi possível carregar seu perfil de atleta.
+          </div>
+        )}
+
+        {shouldShowEmptyState ? (
+          <div className="physical-tests-empty-state">
+            <div className="physical-tests-empty-title">
+              {isAthlete ? 'Perfil de atleta não encontrado' : 'Selecione um aluno'}
+            </div>
+            <div className="physical-tests-empty-text">
+              {isAthlete
+                ? 'Não foi possível identificar o aluno atual.'
+                : 'Escolha um aluno para ver e agendar testes físicos.'}
+            </div>
+          </div>
+        ) : athleteId ? (
           <section className="physical-tests-table-wrapper">
             {error && (
               <div className="physical-tests-message error">
@@ -259,8 +306,8 @@ const PhysicalTestsPage = () => {
                   <tr>
                     <td colSpan={4} className="empty-row">
                       {showExpired
-                        ? 'Não há testes para este aluno.'
-                        : 'Não há testes futuros para este aluno.'}
+                        ? (isAthlete ? 'Não há testes para você.' : 'Não há testes para este aluno.')
+                        : (isAthlete ? 'Não há testes futuros para você.' : 'Não há testes futuros para este aluno.')}
                     </td>
                   </tr>
                 ) : (
@@ -294,15 +341,25 @@ const PhysicalTestsPage = () => {
                           </span>
                         </td>
                         <td>
-                          <button
-                            type="button"
-                            className="edit-physical-test-btn"
-                            onClick={() => handleOpenEdit(test)}
-                          >
-                            <EditIcon fontSize="small" />
-                            {' '}
-                            Editar
-                          </button>
+                          {isAthlete ? (
+                            <button
+                              type="button"
+                              className="edit-physical-test-btn"
+                              onClick={() => handleOpenDetails(test)}
+                            >
+                              Detalhes
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="edit-physical-test-btn"
+                              onClick={() => handleOpenEdit(test)}
+                            >
+                              <EditIcon fontSize="small" />
+                              {' '}
+                              Editar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -350,22 +407,34 @@ const PhysicalTestsPage = () => {
               </div>
             )}
           </section>
-        )}
+        ) : null}
       </div>
 
-      <SchedulePhysicalTestModal
-        open={scheduleOpen}
-        onClose={() => setScheduleOpen(false)}
-        athleteId={athleteId}
-        userName={userName}
-      />
+      {!isAthlete && (
+        <>
+          <SchedulePhysicalTestModal
+            open={scheduleOpen}
+            onClose={() => setScheduleOpen(false)}
+            athleteId={athleteId}
+            userName={userName}
+          />
 
-      <EditPhysicalTestModal
-        open={editOpen}
-        onClose={handleCloseEdit}
-        physicalTest={selectedTest}
-        userName={userName}
-      />
+          <EditPhysicalTestModal
+            open={editOpen}
+            onClose={handleCloseEdit}
+            physicalTest={selectedTest}
+            userName={userName}
+          />
+        </>
+      )}
+
+      {isAthlete && (
+        <PhysicalTestDetailsModal
+          open={detailsOpen}
+          onClose={handleCloseDetails}
+          physicalTest={detailsTest}
+        />
+      )}
     </div>
   );
 };

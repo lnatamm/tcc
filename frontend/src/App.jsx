@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
-import Home from './pages/Home';
+import HomeGate from './pages/HomeGate';
 import AthleteControl from './pages/AthleteControl';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
@@ -29,14 +29,14 @@ const App = () => {
                 path="/home"
                 element={
                   <PrivateRoute>
-                    <Home />
+                    <HomeGate />
                   </PrivateRoute>
                 }
               />
               <Route
                 path="/athlete-control"
                 element={
-                  <PrivateRoute>
+                  <PrivateRoute allowUserTypes={['coach']}>
                     <AthleteControl />
                   </PrivateRoute>
                 }
@@ -44,7 +44,7 @@ const App = () => {
               <Route
                 path="/routines"
                 element={
-                  <PrivateRoute>
+                  <PrivateRoute allowUserTypes={['coach']}>
                     <RoutinesPage />
                   </PrivateRoute>
                 }
@@ -52,7 +52,7 @@ const App = () => {
               <Route
                 path="/today"
                 element={
-                  <PrivateRoute>
+                  <PrivateRoute allowUserTypes={['coach']}>
                     <TodayRoutines />
                   </PrivateRoute>
                 }
@@ -60,7 +60,7 @@ const App = () => {
               <Route
                 path="/dashboard"
                 element={
-                  <PrivateRoute>
+                  <PrivateRoute allowUserTypes={['coach']}>
                     <Dashboard />
                   </PrivateRoute>
                 }
@@ -76,7 +76,7 @@ const App = () => {
               <Route
                 path="/events"
                 element={
-                  <PrivateRoute>
+                  <PrivateRoute allowUserTypes={['coach']}>
                     <EventsPage />
                   </PrivateRoute>
                 }

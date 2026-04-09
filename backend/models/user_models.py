@@ -26,4 +26,5 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    user_type_name: Optional[str] = None
     ultimo_acesso: Optional[str] = None

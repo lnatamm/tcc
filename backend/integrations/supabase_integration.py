@@ -65,6 +65,32 @@ class SupabaseIntegration:
 
     def get_all_user_types(self):
         """Returns all user types (e.g., athlete, coach)."""
+        result = self.client.table('user_type').select('*').order('name').execute()
+        if result.data:
+            return result
+
+        # Best-effort: seed default user types if the table is empty.
+        # Some schemas require audit columns; others only have (id, name).
+        now = datetime.utcnow().isoformat()
+        try:
+            self.client.table('user_type').insert(
+                [
+                    {"name": "athlete", "created_at": now, "created_by": "system"},
+                    {"name": "coach", "created_at": now, "created_by": "system"},
+                ]
+            ).execute()
+        except Exception:
+            try:
+                self.client.table('user_type').insert(
+                    [
+                        {"name": "athlete"},
+                        {"name": "coach"},
+                    ]
+                ).execute()
+            except Exception:
+                # If seeding fails (permissions/schema), just return the empty result.
+                return result
+
         return self.client.table('user_type').select('*').order('name').execute()
 
     def get_user_type_by_id(self, type_id: int):
@@ -80,6 +106,10 @@ class SupabaseIntegration:
     def get_athlete_by_id(self, athlete_id: int):
         """Returns an athlete by ID"""
         return self.client.table('athlete').select('*').eq('id', athlete_id).execute()
+
+    def get_athlete_by_user_id(self, user_id: int):
+        """Returns an athlete by linked user ID (athlete.id_user)."""
+        return self.client.table('athlete').select('*').eq('id_user', user_id).execute()
     
     def get_athlete_photo_path_by_id(self, athlete_id: int):
         """Returns athlete photo bytes by ID"""

@@ -50,6 +50,11 @@ export const athleteService = {
     return response.data;
   },
 
+  getByUserId: async (userId) => {
+    const response = await api.get(`/athletes/by-user/${userId}`);
+    return response.data;
+  },
+
   getById: async (id) => {
     const response = await api.get(`/athletes/${id}`);
     return response.data;

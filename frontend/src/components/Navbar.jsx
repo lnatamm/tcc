@@ -15,6 +15,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const isAthlete = String(user?.user_type_name || '').trim().toLowerCase() === 'athlete';
+
   // Hide the sidebar on the login / register pages
   if (
     location.pathname === '/' ||
@@ -45,29 +47,33 @@ const Navbar = () => {
           <span>Home</span>
         </Link>
 
-        <Link
-          to="/routines"
-          className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
-        >
-          <TodayIcon sx={{ fontSize: 20 }} />
-          <span>Rotinas e exercícios</span>
-        </Link>
+        {!isAthlete && (
+          <>
+            <Link
+              to="/routines"
+              className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
+            >
+              <TodayIcon sx={{ fontSize: 20 }} />
+              <span>Rotinas e exercícios</span>
+            </Link>
 
-        <Link
-          to="/today"
-          className={`sidebar-link ${location.pathname === '/today' ? 'active' : ''}`}
-        >
-          <CalendarTodayIcon sx={{ fontSize: 20 }} />
-          <span>Hoje</span>
-        </Link>
+            <Link
+              to="/today"
+              className={`sidebar-link ${location.pathname === '/today' ? 'active' : ''}`}
+            >
+              <CalendarTodayIcon sx={{ fontSize: 20 }} />
+              <span>Hoje</span>
+            </Link>
 
-        <Link
-          to="/dashboard"
-          className={`sidebar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
-        >
-          <DashboardIcon sx={{ fontSize: 20 }} />
-          <span>Dashboard</span>
-        </Link>
+            <Link
+              to="/dashboard"
+              className={`sidebar-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+            >
+              <DashboardIcon sx={{ fontSize: 20 }} />
+              <span>Dashboard</span>
+            </Link>
+          </>
+        )}
 
         <Link
           to="/physical-tests"
@@ -77,21 +83,25 @@ const Navbar = () => {
           <span>Testes Físicos</span>
         </Link>
 
-        <Link
-          to="/events"
-          className={`sidebar-link ${location.pathname === '/events' ? 'active' : ''}`}
-        >
-          <EventIcon sx={{ fontSize: 20 }} />
-          <span>Eventos</span>
-        </Link>
+        {!isAthlete && (
+          <>
+            <Link
+              to="/events"
+              className={`sidebar-link ${location.pathname === '/events' ? 'active' : ''}`}
+            >
+              <EventIcon sx={{ fontSize: 20 }} />
+              <span>Eventos</span>
+            </Link>
 
-        <Link
-          to="/athlete-control"
-          className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
-        >
-          <PersonIcon sx={{ fontSize: 20 }} />
-          <span>Alunos e turmas</span>
-        </Link>
+            <Link
+              to="/athlete-control"
+              className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
+            >
+              <PersonIcon sx={{ fontSize: 20 }} />
+              <span>Alunos e turmas</span>
+            </Link>
+          </>
+        )}
       </nav>
 
       <div className="sidebar-footer">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Background from '../../assets/Background.png';
 import Logo from '../../assets/Logo.png';
 import api from '../../api';
@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -19,11 +20,23 @@ const Register = () => {
   const [levelId, setLevelId] = useState('');
   const [error, setError] = useState('');
 
+  const normalize = (value) => String(value || '').trim().toLowerCase();
+
+  const athleteNameFromCoachFlow = location?.state?.athleteName || '';
+  const allowWhileLoggedIn = Boolean(athleteNameFromCoachFlow);
+
   useEffect(() => {
-    if (user) {
+    if (user && !allowWhileLoggedIn) {
       navigate('/home');
     }
-  }, [user, navigate]);
+  }, [user, navigate, allowWhileLoggedIn]);
+
+  useEffect(() => {
+    if (athleteNameFromCoachFlow) {
+      setName(String(athleteNameFromCoachFlow));
+      setProfileType('athlete');
+    }
+  }, [athleteNameFromCoachFlow]);
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -57,7 +70,25 @@ const Register = () => {
       return;
     }
 
-    const typeId = userTypes?.find((t) => t?.name === profileType)?.id;
+    if (!userTypes || userTypes.length === 0) {
+      setError('Tipos de usuário não carregados. Recarregue a página e tente novamente.');
+      return;
+    }
+
+    const profileKey = normalize(profileType);
+    const matchesProfileType = (typeRow) => {
+      const name = normalize(typeRow?.name ?? typeRow?.nome);
+      if (!name) return false;
+
+      if (name === profileKey) return true;
+
+      // Fallbacks for databases that store PT-BR names
+      if (profileKey === 'athlete') return name === 'aluno' || name === 'atleta';
+      if (profileKey === 'coach') return name === 'professor' || name === 'treinador';
+      return false;
+    };
+
+    const typeId = userTypes?.find(matchesProfileType)?.id;
     if (!typeId) {
       setError('Tipo de usuário inválido.');
       return;
@@ -140,6 +171,7 @@ const Register = () => {
                 }
               }}
               required
+              disabled={allowWhileLoggedIn}
             >
               <option value="athlete">Aluno</option>
               <option value="coach">Professor</option>

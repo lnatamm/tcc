@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   teamService, 
   athleteService, 
@@ -11,6 +11,8 @@ import {
   physicalTestService,
   eventService
 } from '../services/apiService';
+
+import { useAuth } from '../context/AuthContext';
 
 // ============= TEAMS ============
 
@@ -101,11 +103,27 @@ export const useDeleteTeam = () => {
 
 // ============= ATHLETES =============
 
-export const useAthletes = () => {
+export const useAthletes = (enabled = true) => {
   return useQuery({
     queryKey: ['athletes'],
     queryFn: athleteService.getAll,
+    enabled,
   });
+};
+
+export const useAthleteByUserId = (userId) => {
+  return useQuery({
+    queryKey: ['athlete', 'by-user', userId],
+    queryFn: () => athleteService.getByUserId(userId),
+    enabled: !!userId,
+    retry: false,
+  });
+};
+
+export const useMyAthlete = () => {
+  const { user } = useAuth();
+  const isAthlete = String(user?.user_type_name || '').trim().toLowerCase() === 'athlete';
+  return useAthleteByUserId(isAthlete ? user?.id : null);
 };
 
 export const useAthlete = (id) => {
@@ -113,6 +131,14 @@ export const useAthlete = (id) => {
     queryKey: ['athlete', id],
     queryFn: () => athleteService.getById(id),
     enabled: !!id,
+  });
+};
+
+export const useAthleteTeams = (athleteId) => {
+  return useQuery({
+    queryKey: ['athlete', athleteId, 'teams'],
+    queryFn: () => athleteService.getTeams(athleteId),
+    enabled: !!athleteId,
   });
 };
 
@@ -391,6 +417,31 @@ export const useRoutinesByAthlete = (athleteId) => {
     queryFn: () => routineService.getByAthlete(athleteId),
     enabled: !!athleteId,
   });
+};
+
+export const useRoutineExercisesByAthlete = (athleteId) => {
+  const routinesQuery = useRoutinesByAthlete(athleteId);
+  const routines = routinesQuery.data || [];
+
+  const routineExercisesQueries = useQueries({
+    queries: routines.map((routine) => ({
+      queryKey: ['routine-exercises', routine.id],
+      queryFn: () => routineService.getExercises(routine.id),
+      enabled: !!routine?.id,
+    })),
+  });
+
+  const isLoading = routinesQuery.isLoading || routineExercisesQueries.some((q) => q.isLoading);
+  const error = routinesQuery.error || routineExercisesQueries.find((q) => q.error)?.error;
+
+  const routineExercises = routineExercisesQueries.flatMap((q) => q.data || []);
+
+  return {
+    routines: routinesQuery.data || [],
+    routineExercises,
+    isLoading,
+    error,
+  };
 };
 
 export const useRoutineWithExercises = (routineId) => {
