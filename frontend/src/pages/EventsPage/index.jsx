@@ -24,6 +24,8 @@ const ITEMS_PER_PAGE = 10;
 
 const EventsPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [search, setSearch] = useState('');
   const [showExpired, setShowExpired] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -192,26 +194,27 @@ const EventsPage = () => {
                 <th>EVENT</th>
                 <th>DATE</th>
                 <th>TEAMS</th>
+                <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">Loading data...</td>
+                  <td colSpan={4} className="empty-row">Loading data...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">Unable to load data. Please try again.</td>
+                  <td colSpan={4} className="empty-row">Unable to load data. Please try again.</td>
                 </tr>
               ) : visibleEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">
+                  <td colSpan={4} className="empty-row">
                     {showExpired ? 'No events found.' : 'No upcoming events.'}
                   </td>
                 </tr>
               ) : filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">No events matched your filters.</td>
+                  <td colSpan={4} className="empty-row">No events matched your filters.</td>
                 </tr>
               ) : (
                 pagedEvents.map((event) => (
@@ -244,6 +247,18 @@ const EventsPage = () => {
                           ))
                         )}
                       </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="edit-event-btn"
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setEditOpen(true);
+                        }}
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -289,6 +304,15 @@ const EventsPage = () => {
       </div>
 
       <AddEventModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <AddEventModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setSelectedEvent(null);
+        }}
+        mode="edit"
+        event={selectedEvent}
+      />
     </div>
   );
 };

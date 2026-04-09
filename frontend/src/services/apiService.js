@@ -345,6 +345,14 @@ export const eventService = {
     });
     return response.data;
   },
+
+  update: async (id, eventData) => {
+    const { updated_by, ...data } = eventData;
+    const response = await api.put(`/events/${id}`, data, {
+      params: { user: updated_by },
+    });
+    return response.data;
+  },
 };
 
 // Type Exercises

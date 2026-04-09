@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -22,13 +22,14 @@ import {
 } from '@mui/material';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
-import { useCreateEvent, useTeams } from '../hooks/useApi';
+import { useCreateEvent, useTeams, useUpdateEvent } from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
 
-const AddEventModal = ({ open, onClose }) => {
+const AddEventModal = ({ open, onClose, mode = 'create', event = null, onSubmitSuccess }) => {
   const { user } = useAuth();
   const { data: teams = [] } = useTeams();
   const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -51,13 +52,47 @@ const AddEventModal = ({ open, onClose }) => {
     setTeamsDialogOpen(false);
     setValidationError('');
     createEvent.reset();
+    updateEvent.reset();
   };
 
   const handleClose = () => {
-    if (createEvent.isPending) return;
+    if (createEvent.isPending || updateEvent.isPending) return;
     resetState();
     onClose();
   };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (mode === 'edit' && event) {
+      setName(event.name || '');
+      setDescription(event.description || '');
+
+      if (event.start_date) {
+        const d = new Date(event.start_date);
+        if (!Number.isNaN(d.getTime())) {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          setStartDate(`${year}-${month}-${day}`);
+        } else {
+          setStartDate('');
+        }
+      } else {
+        setStartDate('');
+      }
+
+      const initialTeamIds = (event.teams || []).map((t) => t.id);
+      setSelectedTeamIds(initialTeamIds);
+      setValidationError('');
+      createEvent.reset();
+      updateEvent.reset();
+    } else if (mode === 'create') {
+      resetState();
+    }
+  }, [open, mode, event]);
 
   const toggleTeamSelection = (teamId) => {
     setSelectedTeamIds((prev) => {
@@ -88,6 +123,30 @@ const AddEventModal = ({ open, onClose }) => {
 
     setValidationError('');
 
+    if (mode === 'edit' && event) {
+      updateEvent.mutate(
+        {
+          id: event.id,
+          data: {
+            name: name.trim(),
+            description: description.trim() || null,
+            start_date: startDate,
+            team_ids: selectedTeamIds,
+            updated_by: user?.nome || 'system',
+          },
+        },
+        {
+          onSuccess: () => {
+            if (onSubmitSuccess) {
+              onSubmitSuccess();
+            }
+            handleClose();
+          },
+        }
+      );
+      return;
+    }
+
     createEvent.mutate(
       {
         name: name.trim(),
@@ -98,23 +157,33 @@ const AddEventModal = ({ open, onClose }) => {
       },
       {
         onSuccess: () => {
+          if (onSubmitSuccess) {
+            onSubmitSuccess();
+          }
           handleClose();
         },
       }
     );
   };
 
+  const isSubmitting = createEvent.isPending || updateEvent.isPending;
+  const hasMutationError = createEvent.isError || updateEvent.isError;
+  const dialogTitle = mode === 'edit' ? 'Edit Event' : 'Create Event';
+  const submitLabel = mode === 'edit'
+    ? (isSubmitting ? 'Saving...' : 'Save changes')
+    : (isSubmitting ? 'Creating...' : 'Create event');
+
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Event</DialogTitle>
+        <DialogTitle>{dialogTitle}</DialogTitle>
 
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              {(validationError || createEvent.isError) && (
+              {(validationError || hasMutationError) && (
                 <Alert severity="error">
-                  {validationError || 'Unable to create the event. Please try again.'}
+                  {validationError || 'Unable to save the event. Please try again.'}
                 </Alert>
               )}
 
@@ -123,7 +192,7 @@ const AddEventModal = ({ open, onClose }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                disabled={createEvent.isPending}
+                disabled={isSubmitting}
                 autoFocus
                 fullWidth
               />
@@ -134,7 +203,7 @@ const AddEventModal = ({ open, onClose }) => {
                 onChange={(e) => setDescription(e.target.value)}
                 multiline
                 minRows={3}
-                disabled={createEvent.isPending}
+                disabled={isSubmitting}
                 fullWidth
               />
 
@@ -144,7 +213,7 @@ const AddEventModal = ({ open, onClose }) => {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
-                disabled={createEvent.isPending}
+                disabled={isSubmitting}
                 InputLabelProps={{ shrink: true }}
                 fullWidth
               />
@@ -168,7 +237,7 @@ const AddEventModal = ({ open, onClose }) => {
                 variant="outlined"
                 startIcon={<GroupAddIcon />}
                 onClick={() => setTeamsDialogOpen(true)}
-                disabled={createEvent.isPending}
+                disabled={isSubmitting}
               >
                 Add teams
               </Button>
@@ -176,16 +245,16 @@ const AddEventModal = ({ open, onClose }) => {
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleClose} disabled={createEvent.isPending}>
+            <Button onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
               type="submit"
               variant="contained"
-              disabled={createEvent.isPending}
-              startIcon={createEvent.isPending ? <CircularProgress size={16} /> : null}
+              disabled={isSubmitting}
+              startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
             >
-              {createEvent.isPending ? 'Creating...' : 'Create event'}
+              {submitLabel}
             </Button>
           </DialogActions>
         </form>

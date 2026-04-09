@@ -518,6 +518,16 @@ export const useCreateEvent = () => {
   });
 };
 
+export const useUpdateEvent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => eventService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+};
+
 export const useAddExerciseToRoutine = () => {
   const queryClient = useQueryClient();
   

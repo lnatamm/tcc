@@ -515,6 +515,25 @@ class SupabaseIntegration:
         }
         return self.client.table('event').insert(data).execute()
 
+    def update_event(self, event_id: int, event_update: EventUpdate):
+        """Updates an event"""
+        data = {}
+        if event_update.name is not None:
+            data["name"] = event_update.name
+        if event_update.description is not None:
+            data["description"] = event_update.description
+        if event_update.start_date is not None:
+            data["start_date"] = event_update.start_date
+        if getattr(event_update, 'updated_by', None) is not None:
+            data["updated_by"] = event_update.updated_by
+        if getattr(event_update, 'updated_at', None) is not None:
+            data["updated_at"] = event_update.updated_at
+
+        if not data:
+            return self.client.table('event').select('*').eq('id', event_id).execute()
+
+        return self.client.table('event').update(data).eq('id', event_id).execute()
+
     def delete_event(self, event_id: int):
         """Deletes an event"""
         return self.client.table('event').delete().eq('id', event_id).execute()
@@ -539,6 +558,10 @@ class SupabaseIntegration:
         if not rows:
             return self.client.table('team_has_event').insert([]).execute()
         return self.client.table('team_has_event').insert(rows).execute()
+
+    def delete_teams_from_event(self, event_id: int):
+        """Removes all team links for a given event."""
+        return self.client.table('team_has_event').delete().eq('id_event', event_id).execute()
 
     def get_team_links_by_event_ids(self, event_ids: list[int]):
         """Returns event-team links with team details."""

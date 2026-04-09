@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from integrations.supabase_integration import SupabaseIntegration
-from models.event_models import EventCreate
+from models.event_models import EventCreate, EventUpdate
 
 
 class EventController:
@@ -70,6 +70,53 @@ class EventController:
             self.supabase_integration.delete_event(event_id)
             raise
 
+        links_result = self.supabase_integration.get_team_links_by_event_ids([event_id])
+        links = links_result.data or []
+        event_data["teams"] = [
+            {
+                "id": link.get("id_team"),
+                "name": (link.get("team") or {}).get("name", "Turma sem nome"),
+            }
+            for link in links
+        ]
+        return event_data
+
+    def update_event_with_teams(
+        self,
+        event_id: int,
+        name: str,
+        description: Optional[str],
+        start_date_iso: str,
+        team_ids: list[int],
+        updated_by: str,
+    ):
+        """Updates an event and its linked teams."""
+        updated_at = datetime.now().isoformat()
+
+        event_update = EventUpdate(
+            id=event_id,
+            name=name,
+            description=description,
+            start_date=start_date_iso,
+            updated_at=updated_at,
+            updated_by=updated_by,
+        )
+
+        updated_result = self.supabase_integration.update_event(event_id, event_update)
+        if not updated_result.data:
+            raise ValueError("Failed to update event")
+
+        # Reset team links for this event and add the new set
+        self.supabase_integration.delete_teams_from_event(event_id)
+        if team_ids:
+            self.supabase_integration.add_teams_to_event_bulk(
+                event_id=event_id,
+                team_ids=team_ids,
+                created_at_iso=updated_at,
+                created_by=updated_by,
+            )
+
+        event_data = updated_result.data[0]
         links_result = self.supabase_integration.get_team_links_by_event_ids([event_id])
         links = links_result.data or []
         event_data["teams"] = [
