@@ -13,27 +13,72 @@ const formatDate = (dateIso) => {
   return d.toLocaleDateString('en-US');
 };
 
+const toMidnightDate = (dt) => {
+  const d = new Date(dt);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 const ITEMS_PER_PAGE = 10;
 
 const EventsPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [showExpired, setShowExpired] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const { data: events = [], isLoading, error } = useEvents();
 
+  const normalizedEvents = useMemo(() => {
+    const today = toMidnightDate(new Date());
+
+    return events.map((event) => {
+      const eventDate = toMidnightDate(event.start_date);
+      const isExpired = Boolean(eventDate && today && eventDate < today);
+
+      return { ...event, eventDate, isExpired };
+    });
+  }, [events]);
+
+  const visibleEvents = useMemo(() => {
+    if (showExpired) return normalizedEvents;
+    return normalizedEvents.filter((event) => !event.isExpired);
+  }, [normalizedEvents, showExpired]);
+
   const filteredEvents = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return events;
-    return events.filter(
+    const normalizedStartDate = startDate ? toMidnightDate(startDate) : null;
+    const normalizedEndDate = endDate ? toMidnightDate(endDate) : null;
+
+    const dateFilteredEvents = visibleEvents.filter((event) => {
+      if (!normalizedStartDate && !normalizedEndDate) {
+        return true;
+      }
+
+      if (!event.eventDate) {
+        return false;
+      }
+
+      const matchesStart = !normalizedStartDate || event.eventDate >= normalizedStartDate;
+      const matchesEnd = !normalizedEndDate || event.eventDate <= normalizedEndDate;
+
+      return matchesStart && matchesEnd;
+    });
+
+    if (!query) return dateFilteredEvents;
+
+    return dateFilteredEvents.filter(
       (e) =>
         e.name?.toLowerCase().includes(query) ||
         e.description?.toLowerCase().includes(query),
     );
-  }, [events, search]);
+  }, [endDate, search, startDate, visibleEvents]);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [filteredEvents]);
+  }, [endDate, filteredEvents.length, showExpired, startDate]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / ITEMS_PER_PAGE));
   const pagedEvents = filteredEvents.slice(
@@ -53,13 +98,8 @@ const EventsPage = () => {
   };
 
   const totalEvents = events.length;
-  const upcomingEvents = events.filter((e) => {
-    if (!e.start_date) return false;
-    return new Date(e.start_date) >= new Date();
-  }).length;
-  const totalTeamsLinked = new Set(
-    events.flatMap((e) => (e.teams || []).map((t) => t.id)),
-  ).size;
+  const upcomingEvents = normalizedEvents.filter((event) => !event.isExpired).length;
+  const expiredEvents = normalizedEvents.filter((event) => event.isExpired).length;
 
   return (
     <div className="events-page">
@@ -75,8 +115,8 @@ const EventsPage = () => {
             <div className="stat-value">{upcomingEvents}</div>
           </div>
           <div className="stat-item">
-            <div className="stat-label">Linked teams</div>
-            <div className="stat-value">{totalTeamsLinked}</div>
+            <div className="stat-label">Expired events</div>
+            <div className="stat-value">{expiredEvents}</div>
           </div>
         </div>
       </div>
@@ -92,13 +132,57 @@ const EventsPage = () => {
               placeholder="Search by event name or description"
             />
           </div>
-          <button
-            type="button"
-            className="add-event-btn"
-            onClick={() => setCreateOpen(true)}
-          >
-            Create Event
-          </button>
+
+          <div className="events-controls-group">
+            <label className="events-date-field">
+              <span className="events-date-label">Start date</span>
+              <input
+                type="date"
+                className="events-date-input"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </label>
+
+            <label className="events-date-field">
+              <span className="events-date-label">End date</span>
+              <input
+                type="date"
+                className="events-date-input"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="clear-dates-btn"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              disabled={!startDate && !endDate}
+            >
+              Clear dates
+            </button>
+
+            <label className="events-toggle">
+              <input
+                type="checkbox"
+                checked={showExpired}
+                onChange={(e) => setShowExpired(e.target.checked)}
+              />
+              Show expired
+            </label>
+
+            <button
+              type="button"
+              className="add-event-btn"
+              onClick={() => setCreateOpen(true)}
+            >
+              Create Event
+            </button>
+          </div>
         </section>
 
         <section className="events-table-wrapper">
@@ -119,9 +203,15 @@ const EventsPage = () => {
                 <tr>
                   <td colSpan={3} className="empty-row">Unable to load data. Please try again.</td>
                 </tr>
+              ) : visibleEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="empty-row">
+                    {showExpired ? 'No events found.' : 'No upcoming events.'}
+                  </td>
+                </tr>
               ) : filteredEvents.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="empty-row">No events found.</td>
+                  <td colSpan={3} className="empty-row">No events matched your filters.</td>
                 </tr>
               ) : (
                 pagedEvents.map((event) => (
