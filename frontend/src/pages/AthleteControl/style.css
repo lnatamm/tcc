@@ -64,6 +64,48 @@
   flex-wrap: wrap;
 }
 
+.athlete-controls-left {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.search-row {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.view-switch {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(226, 232, 240, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.view-switch-button {
+  border: none;
+  background: transparent;
+  color: rgba(55, 65, 81, 0.78);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.view-switch-button.active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
 .search-wrapper {
   flex: 1;
   min-width: 240px;
@@ -156,10 +198,18 @@
   background: transparent;
 }
 
+.search-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .add-athlete-btn {
   border: none;
   border-radius: 14px;
   padding: 12px 18px;
+  min-height: 52px;
   background: #2563eb;
   color: #ffffff;
   font-weight: 700;
@@ -207,6 +257,10 @@
 
 .athlete-table tr:last-child {
   border-bottom: none;
+}
+
+.team-table .team-members-row:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
 .student-cell {
@@ -263,6 +317,102 @@
 .status-badge.inactive {
   background: rgba(239, 68, 68, 0.18);
   color: #991b1b;
+}
+
+.team-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 118px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.team-expand-cell {
+  width: 220px;
+  text-align: right;
+}
+
+.team-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.add-team-athlete-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+  white-space: nowrap;
+}
+
+.add-team-athlete-btn:hover {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.expand-team-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #2563eb;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.expand-team-btn:hover {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.expand-team-btn.expanded {
+  transform: rotate(180deg);
+}
+
+.team-members-row td {
+  padding: 0;
+  background: rgba(248, 250, 252, 0.95);
+}
+
+.team-members-list {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.team-member-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.team-member-avatar {
+  flex-shrink: 0;
+}
+
+.team-members-empty {
+  padding: 20px 16px;
+  color: rgba(55, 65, 81, 0.72);
+  font-weight: 600;
 }
 
 .view-athlete-btn {
@@ -337,6 +487,35 @@
   .athlete-controls {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .view-switch {
+    align-self: stretch;
+  }
+
+  .view-switch-button {
+    flex: 1;
+  }
+
+  .team-member-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .team-actions {
+    justify-content: flex-start;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
+
+  .search-actions {
+    width: 100%;
+  }
+
+  .search-actions .add-athlete-btn {
+    flex: 1;
   }
 
   .mediatr {
