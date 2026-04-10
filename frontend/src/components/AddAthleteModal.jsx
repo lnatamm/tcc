@@ -10,7 +10,13 @@ import {
   CircularProgress
 } from '@mui/material';
 
-export default function AddAthleteModal({ open, onClose, onSubmit, loading = false }) {
+export default function AddAthleteModal({
+  open,
+  onClose,
+  onSubmit,
+  loading = false,
+  submitError = '',
+}) {
   const [athleteName, setAthleteName] = useState('');
   const [error, setError] = useState('');
 
@@ -25,6 +31,10 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
   };
 
   const handleSubmit = () => {
+    if (loading) {
+      return;
+    }
+
     const sanitizedAthleteName = athleteName.trim();
 
     if (!sanitizedAthleteName) {
@@ -34,16 +44,15 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
 
     setError('');
     onSubmit(sanitizedAthleteName);
-    setAthleteName('');
   };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle>Add athlete</DialogTitle>
       <DialogContent>
-        {error && (
+        {(error || submitError) && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {error || submitError}
           </Alert>
         )}
 
@@ -78,7 +87,7 @@ export default function AddAthleteModal({ open, onClose, onSubmit, loading = fal
           disabled={loading}
           startIcon={loading && <CircularProgress size={16} />}
         >
-          {loading ? 'Opening...' : 'Continue'}
+          {loading ? 'Adding...' : 'Add athlete'}
         </Button>
       </DialogActions>
     </Dialog>

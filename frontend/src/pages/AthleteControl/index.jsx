@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
-import { useTeamsWithAthletes, useAthletes, useEnrollments } from '../../hooks/useApi';
+import { useTeamsWithAthletes, useAthletes, useEnrollments, useCreateAthlete } from '../../hooks/useApi';
 import { Avatar, IconButton, Popover, Box } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -21,6 +21,7 @@ const AthleteControl = () => {
   const { data: teams = [], isLoading: teamsLoading, error: teamsError } = useTeamsWithAthletes();
   const { data: athletes = [], isLoading, error } = useAthletes();
   const { data: enrollments = [] } = useEnrollments();
+  const createAthlete = useCreateAthlete();
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('athletes');
 
@@ -175,8 +176,16 @@ const AthleteControl = () => {
   };
 
   const handleAddAthlete = (athleteName) => {
-    setAddModalOpen(false);
-    navigate('/register', { state: { athleteName } });
+    createAthlete.mutate(
+      {
+        name: athleteName,
+      },
+      {
+        onSuccess: () => {
+          setAddModalOpen(false);
+        },
+      }
+    );
   };
 
   const toggleExpandedTeam = (teamId) => {
@@ -570,6 +579,8 @@ const AthleteControl = () => {
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         onSubmit={handleAddAthlete}
+        loading={createAthlete.isPending}
+        submitError={createAthlete.isError ? 'Unable to add athlete. Please try again.' : ''}
       />
 
       <AddTeamModal
