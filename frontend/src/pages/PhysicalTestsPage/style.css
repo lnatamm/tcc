@@ -1,0 +1,370 @@
+.physical-tests-page {
+  min-height: 100vh;
+}
+
+.physical-tests-summary-card {
+  padding: 24px 28px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.08);
+  margin-bottom: 32px;
+}
+
+.physical-tests-summary-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.physical-tests-summary-subtitle {
+  font-size: 14px;
+  color: rgba(55, 65, 81, 0.75);
+  margin-bottom: 18px;
+}
+
+.physical-tests-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 18px;
+}
+
+.physical-tests-stat-item {
+  padding: 16px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+}
+
+.physical-tests-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(55, 65, 81, 0.7);
+  margin-bottom: 10px;
+}
+
+.physical-tests-stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.physical-tests-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 18px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+}
+
+.physical-tests-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.physical-tests-controls-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.physical-test-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  flex: 1;
+}
+
+.physical-test-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(55, 65, 81, 0.8);
+}
+
+.physical-test-select {
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.physical-test-select:disabled {
+  opacity: 0.65;
+}
+
+.physical-test-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.physical-test-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+.add-physical-test-btn,
+.edit-physical-test-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 18px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease;
+  white-space: nowrap;
+}
+
+.add-physical-test-btn:hover,
+.edit-physical-test-btn:hover {
+  background: #1d4ed8;
+}
+
+.add-physical-test-btn:disabled,
+.edit-physical-test-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.physical-tests-message {
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.physical-tests-message.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #991b1b;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+.physical-tests-empty-state {
+  padding: 56px 24px;
+  text-align: center;
+  background: rgba(248, 249, 250, 0.9);
+  border: 2px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 18px;
+}
+
+.physical-tests-empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(17, 24, 39, 0.8);
+}
+
+.physical-tests-empty-text {
+  font-size: 14px;
+  color: rgba(55, 65, 81, 0.75);
+  margin-top: 10px;
+}
+
+.physical-tests-table-wrapper {
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 18px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+}
+
+.physical-tests-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.physical-tests-table th,
+.physical-tests-table td {
+  padding: 14px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.physical-tests-table th {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(55, 65, 81, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.physical-tests-table tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.physical-tests-table tr:last-child {
+  border-bottom: none;
+}
+
+.physical-test-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.physical-test-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.15);
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.physical-test-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.physical-test-name {
+  font-weight: 700;
+  color: #111827;
+}
+
+.physical-test-description {
+  font-size: 12px;
+  color: rgba(55, 65, 81, 0.65);
+}
+
+.physical-test-date {
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.85);
+  white-space: nowrap;
+}
+
+.physical-test-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.physical-test-status.expired {
+  background: rgba(239, 68, 68, 0.18);
+  color: #991b1b;
+}
+
+.physical-test-status.today {
+  background: rgba(245, 158, 11, 0.18);
+  color: #92400e;
+}
+
+.physical-test-status.upcoming {
+  background: rgba(34, 197, 94, 0.18);
+  color: #065f46;
+}
+
+.physical-test-status.unscheduled {
+  background: rgba(107, 114, 128, 0.16);
+  color: #374151;
+}
+
+.empty-row {
+  padding: 36px 0;
+  text-align: center;
+  color: rgba(55, 65, 81, 0.8);
+  font-weight: 600;
+}
+
+.pagination-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pagination-button {
+  min-width: 32px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+.pagination-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagination-button.active {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: #1d4ed8;
+}
+
+.pagination-dots {
+  color: rgba(55, 65, 81, 0.6);
+  padding: 0 8px;
+}
+
+@media (max-width: 900px) {
+  .physical-tests-summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .physical-tests-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .physical-tests-controls-group {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .physical-test-field {
+    min-width: 100%;
+  }
+}

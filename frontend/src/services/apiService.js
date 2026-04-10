@@ -50,6 +50,11 @@ export const athleteService = {
     return response.data;
   },
 
+  getByUserId: async (userId) => {
+    const response = await api.get(`/athletes/by-user/${userId}`);
+    return response.data;
+  },
+
   getById: async (id) => {
     const response = await api.get(`/athletes/${id}`);
     return response.data;
@@ -212,6 +217,18 @@ export const exerciseService = {
     return response.data;
   },
 
+  uploadVideo: async (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post(`/exercises/${id}/video`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   create: async (exerciseData) => {
     const { created_by, ...data } = exerciseData;
     const response = await api.post('/exercises/', data, {
@@ -281,6 +298,64 @@ export const routineService = {
 
   removeExercise: async (routineExerciseId) => {
     const response = await api.delete(`/routines/exercises/${routineExerciseId}`);
+    return response.data;
+  },
+};
+
+// Physical Tests
+export const physicalTestService = {
+  getByAthlete: async (athleteId) => {
+    const response = await api.get(`/physical-tests/athlete/${athleteId}`);
+    return response.data;
+  },
+
+  getExercises: async (physicalTestId) => {
+    const response = await api.get(`/physical-tests/${physicalTestId}/exercises`);
+    return response.data;
+  },
+
+  schedule: async (payload) => {
+    const { created_by, ...data } = payload;
+    const response = await api.post('/physical-tests/schedule', data, {
+      params: { user: created_by },
+    });
+    return response.data;
+  },
+
+  addExercises: async (physicalTestId, payload) => {
+    const { created_by, ...data } = payload;
+    const response = await api.post(`/physical-tests/${physicalTestId}/exercises`, data, {
+      params: { user: created_by },
+    });
+    return response.data;
+  },
+
+  delete: async (physicalTestId) => {
+    const response = await api.delete(`/physical-tests/${physicalTestId}`);
+    return response.data;
+  },
+};
+
+// Events
+export const eventService = {
+  getAll: async () => {
+    const response = await api.get('/events/');
+    return response.data;
+  },
+
+  create: async (eventData) => {
+    const { created_by, ...data } = eventData;
+    const response = await api.post('/events/', data, {
+      params: { user: created_by },
+    });
+    return response.data;
+  },
+
+  update: async (id, eventData) => {
+    const { updated_by, ...data } = eventData;
+    const response = await api.put(`/events/${id}`, data, {
+      params: { user: updated_by },
+    });
     return response.data;
   },
 };

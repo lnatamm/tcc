@@ -1,6 +1,7 @@
 
 fastapi
 pydantic
+pydantic[email]
 typing-extensions
 uvicorn
 psycopg2-binary
@@ -8,3 +9,4 @@ python-dotenv
 dotenv
 supabase
 boto3
+python-multipart

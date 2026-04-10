@@ -14,6 +14,10 @@ class AthleteController:
     def get_athlete_by_id(self, athlete_id: int):
         """Returns an athlete by ID"""
         return self.supabase_integration.get_athlete_by_id(athlete_id)
+
+    def get_athlete_by_user_id(self, user_id: int):
+        """Returns an athlete by linked user ID (athlete.id_user)."""
+        return self.supabase_integration.get_athlete_by_user_id(user_id)
     
     def get_athlete_photo(self, athlete_id: int):
         """Returns the photo bytes of an athlete by ID"""

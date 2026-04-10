@@ -3,11 +3,14 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Carregar variáveis de ambiente
-load_dotenv()
+# Carregar variáveis de ambiente (sempre usando o .env dentro da pasta backend)
+dotenv_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path)
 
+from routes.auth_routes import api_auth
 from routes.athlete_routes import api_athletes
 from routes.team_routes import api_teams
 from routes.coach_routes import api_coaches
@@ -15,17 +18,32 @@ from routes.sport_routes import api_sports
 from routes.exercise_routes import api_exercises
 from routes.enrollment_routes import api_enrollments
 from routes.routine_routes import api_routines
+from routes.physical_test_routes import api_physical_tests
+from routes.event_routes import api_events
 from routes.type_exercise_routes import api_type_exercises
+from routes.exercise_stats_routes import router as exercise_stats_router
+from routes.metric_routes import router as metric_router
+from routes.level_routes import router as level_router
+from routes.user_type_routes import router as user_type_router
 
 app = FastAPI()
 api = APIRouter(prefix="/api", tags=["API"])
 
 # Attention: Adjust the origins list to match your frontend's URL
 # For example, if your frontend is running on localhost:5173, you can set it
+# Support for multiple environments: local, VM, and custom URLs
+client_url = os.getenv("VITE_CLIENT_URL", "http://localhost:5173")
 origins: List[str] = [
     "http://localhost:8080",
-    VITE_CLIENT_URL if (VITE_CLIENT_URL := os.getenv("VITE_CLIENT_URL")) else "http://localhost:5173",
+    "http://localhost:5173",
+    "http://localhost",
+    "http://34.70.210.208",  # VM external IP
+    "http://34.70.210.208:80",
+    client_url,
 ]
+
+# Remove duplicates while preserving order
+origins = list(dict.fromkeys(origins))
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +54,7 @@ app.add_middleware(
 )
 
 # Include routers
+api.include_router(api_auth)
 api.include_router(api_athletes)
 api.include_router(api_teams)
 api.include_router(api_coaches)
@@ -43,7 +62,13 @@ api.include_router(api_sports)
 api.include_router(api_exercises)
 api.include_router(api_enrollments)
 api.include_router(api_routines)
+api.include_router(api_physical_tests)
+api.include_router(api_events)
 api.include_router(api_type_exercises)
+api.include_router(exercise_stats_router)
+api.include_router(metric_router)
+api.include_router(level_router)
+api.include_router(user_type_router)
 
 app.include_router(api)
 

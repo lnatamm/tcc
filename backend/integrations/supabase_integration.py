@@ -8,6 +8,11 @@ from models.exercise_models import *
 from models.sport_models import *
 from models.team_models import *
 from models.routine_models import *
+from models.event_models import *
+from models.user_models import *
+from models.level_models import *
+from models.user_type_models import *
+from datetime import datetime
 
 class SupabaseIntegration:
     def __init__(self):
@@ -24,7 +29,76 @@ class SupabaseIntegration:
 
     def get_client(self):
         return self.client
-    
+
+    # ---------- Users ----------
+
+    def get_user_by_identifier(self, identifier: str):
+        """Find a user by usuario or email."""
+        return self.client.table('users').select('*').or_(f"usuario.eq.{identifier},email.eq.{identifier}").execute()
+
+    def create_user(self, user: UserCreate):
+        """Creates a new user."""
+        data = {
+            "usuario": user.usuario,
+            "email": user.email,
+            "nome": user.nome,
+            "senha": user.senha,
+            "id_user_type": user.id_user_type,
+            "ultimo_acesso": None,
+        }
+        return self.client.table('users').insert(data).execute()
+
+    def delete_user(self, user_id: int):
+        """Deletes a user by ID (best-effort rollback helper)."""
+        return self.client.table('users').delete().eq('id', user_id).execute()
+
+    def update_user_last_access(self, user_id: int):
+        """Updates the user's last access timestamp."""
+        now = datetime.utcnow().isoformat()
+        return self.client.table('users').update({"ultimo_acesso": now}).eq('id', user_id).execute()
+
+    # ---------- Reference tables ----------
+
+    def get_all_levels(self):
+        """Returns all levels."""
+        return self.client.table('level').select('*').order('name').execute()
+
+    def get_all_user_types(self):
+        """Returns all user types (e.g., athlete, coach)."""
+        result = self.client.table('user_type').select('*').order('name').execute()
+        if result.data:
+            return result
+
+        # Best-effort: seed default user types if the table is empty.
+        # Some schemas require audit columns; others only have (id, name).
+        now = datetime.utcnow().isoformat()
+        try:
+            self.client.table('user_type').insert(
+                [
+                    {"name": "athlete", "created_at": now, "created_by": "system"},
+                    {"name": "coach", "created_at": now, "created_by": "system"},
+                ]
+            ).execute()
+        except Exception:
+            try:
+                self.client.table('user_type').insert(
+                    [
+                        {"name": "athlete"},
+                        {"name": "coach"},
+                    ]
+                ).execute()
+            except Exception:
+                # If seeding fails (permissions/schema), just return the empty result.
+                return result
+
+        return self.client.table('user_type').select('*').order('name').execute()
+
+    def get_user_type_by_id(self, type_id: int):
+        """Returns a user type by ID."""
+        return self.client.table('user_type').select('*').eq('id', type_id).execute()
+
+    # ---------- Athletes ----------
+
     def get_all_athletes(self):
         """Returns all athletes"""
         return self.client.table('athlete').select('*').order('name').execute()
@@ -32,6 +106,10 @@ class SupabaseIntegration:
     def get_athlete_by_id(self, athlete_id: int):
         """Returns an athlete by ID"""
         return self.client.table('athlete').select('*').eq('id', athlete_id).execute()
+
+    def get_athlete_by_user_id(self, user_id: int):
+        """Returns an athlete by linked user ID (athlete.id_user)."""
+        return self.client.table('athlete').select('*').eq('id_user', user_id).execute()
     
     def get_athlete_photo_path_by_id(self, athlete_id: int):
         """Returns athlete photo bytes by ID"""
@@ -49,10 +127,14 @@ class SupabaseIntegration:
 
     def create_athlete(self, athlete: AthleteCreate):
         """Creates a new athlete"""
+        created_at = athlete.created_at or datetime.utcnow().isoformat()
+        created_by = athlete.created_by or "system"
         data = {
             "name": athlete.name,
-            "email": athlete.email,
-            "birth_date": athlete.birth_date
+            "photo_path": athlete.photo_path,
+            "id_user": athlete.id_user,
+            "created_at": created_at,
+            "created_by": created_by,
         }
         return self.client.table('athlete').insert(data).execute()
     
@@ -91,10 +173,15 @@ class SupabaseIntegration:
 
     def create_coach(self, coach: CoachCreate):
         """Creates a new coach"""
+        created_at = coach.created_at or datetime.utcnow().isoformat()
+        created_by = coach.created_by or "system"
         data = {
             "name": coach.name,
             "id_level": coach.id_level,
-            "photo_path": coach.photo_path
+            "photo_path": coach.photo_path,
+            "id_user": coach.id_user,
+            "created_at": created_at,
+            "created_by": created_by,
         }
         return self.client.table('coach').insert(data).execute()
 
@@ -139,10 +226,13 @@ class SupabaseIntegration:
 
     def create_enrollment(self, enrollment: EnrollmentCreate):
         """Creates a new enrollment"""
-        data = {
-            "id_team": enrollment.id_team,
-            "id_athlete": enrollment.id_athlete
-        }
+        created_at = enrollment.created_at or datetime.utcnow().isoformat()
+        created_by = enrollment.created_by or "system"
+        data = enrollment.model_dump()
+        data.update({
+            "created_at": created_at,
+            "created_by": created_by,
+        })
         return self.client.table('enrollment').insert(data).execute()
     
     def update_enrollment(self, enrollment_id: int, enrollment_update: EnrollmentUpdate):
@@ -234,6 +324,10 @@ class SupabaseIntegration:
             return self.client.table('exercise').select('*').eq('id', exercise_id).execute()
         
         return self.client.table('exercise').update(data).eq('id', exercise_id).execute()
+
+    def update_exercise_video_path(self, exercise_id: int, video_path: str):
+        """Updates only the exercise video_path."""
+        return self.client.table('exercise').update({"video_path": video_path}).eq('id', exercise_id).execute()
     
     def delete_exercise(self, exercise_id: int):
         """Deletes an exercise"""
@@ -356,7 +450,7 @@ class SupabaseIntegration:
     
     def get_exercises_by_routine_id(self, routine_id: int):
         """Returns all exercises in a routine with their schedule"""
-        return self.client.table('routine_has_exercice').select('*, exercise(*)').eq('id_routine', routine_id).order('start_hour').execute()
+        return self.client.table('routine_has_exercise').select('*, exercise(*)').eq('id_routine', routine_id).order('start_hour').execute()
     
     def create_routine(self, routine: RoutineCreate):
         """Creates a new routine"""
@@ -383,6 +477,165 @@ class SupabaseIntegration:
     def delete_routine(self, routine_id: int):
         """Deletes a routine"""
         return self.client.table('routine').delete().eq('id', routine_id).execute()
+
+    # ============= PHYSICAL TESTS =============
+
+    def get_physical_tests_by_athlete_id(self, athlete_id: int):
+        """Returns all physical tests of an athlete"""
+        return (
+            self.client.table('physical_test')
+            .select('*, physical_test_has_exercise(start_date)')
+            .eq('id_athlete', athlete_id)
+            .order('created_at', desc=True)
+            .execute()
+        )
+
+    def get_physical_test_by_id(self, physical_test_id: int):
+        """Returns a physical test by ID"""
+        return self.client.table('physical_test').select('*').eq('id', physical_test_id).execute()
+
+    def create_physical_test(self, physical_test):
+        """Creates a new physical test"""
+        data = {
+            "id_athlete": physical_test.id_athlete,
+            "name": physical_test.name,
+            "description": physical_test.description,
+            "created_at": physical_test.created_at,
+            "created_by": physical_test.created_by,
+        }
+        return self.client.table('physical_test').insert(data).execute()
+
+    def update_physical_test(self, physical_test_id: int, physical_test_update):
+        """Updates a physical test"""
+        data = {}
+        if physical_test_update.name is not None:
+            data["name"] = physical_test_update.name
+        if physical_test_update.description is not None:
+            data["description"] = physical_test_update.description
+        if getattr(physical_test_update, 'updated_by', None) is not None:
+            data["updated_by"] = physical_test_update.updated_by
+        if getattr(physical_test_update, 'updated_at', None) is not None:
+            data["updated_at"] = physical_test_update.updated_at
+
+        if not data:
+            return self.client.table('physical_test').select('*').eq('id', physical_test_id).execute()
+
+        return self.client.table('physical_test').update(data).eq('id', physical_test_id).execute()
+
+    def delete_physical_test(self, physical_test_id: int):
+        """Deletes a physical test"""
+        return self.client.table('physical_test').delete().eq('id', physical_test_id).execute()
+
+    def get_exercises_by_physical_test_id(self, physical_test_id: int):
+        """Returns all exercises of a physical test with their scheduling window"""
+        return (
+            self.client.table('physical_test_has_exercise')
+            .select('*, exercise(*)')
+            .eq('id_physical_test', physical_test_id)
+            .order('start_date')
+            .execute()
+        )
+
+    def add_exercises_to_physical_test_bulk(
+        self,
+        physical_test_id: int,
+        exercise_ids: list[int],
+        start_date_iso: str,
+        created_at_iso: str,
+        created_by: str,
+    ):
+        """Adds multiple exercises to a physical test using the same scheduled start_date."""
+        rows = [
+            {
+                "id_physical_test": physical_test_id,
+                "id_exercise": ex_id,
+                "start_date": start_date_iso,
+                "end_date": None,
+                "created_at": created_at_iso,
+                "created_by": created_by,
+            }
+            for ex_id in exercise_ids
+        ]
+        if not rows:
+            return self.client.table('physical_test_has_exercise').insert([]).execute()
+        return self.client.table('physical_test_has_exercise').insert(rows).execute()
+
+    # ============= EVENTS =============
+
+    def get_all_events(self):
+        """Returns all events"""
+        return self.client.table('event').select('*').order('start_date').execute()
+
+    def create_event(self, event: EventCreate):
+        """Creates a new event"""
+        data = {
+            "name": event.name,
+            "description": event.description,
+            "start_date": event.start_date,
+            "created_at": event.created_at,
+            "created_by": event.created_by,
+        }
+        return self.client.table('event').insert(data).execute()
+
+    def update_event(self, event_id: int, event_update: EventUpdate):
+        """Updates an event"""
+        data = {}
+        if event_update.name is not None:
+            data["name"] = event_update.name
+        if event_update.description is not None:
+            data["description"] = event_update.description
+        if event_update.start_date is not None:
+            data["start_date"] = event_update.start_date
+        if getattr(event_update, 'updated_by', None) is not None:
+            data["updated_by"] = event_update.updated_by
+        if getattr(event_update, 'updated_at', None) is not None:
+            data["updated_at"] = event_update.updated_at
+
+        if not data:
+            return self.client.table('event').select('*').eq('id', event_id).execute()
+
+        return self.client.table('event').update(data).eq('id', event_id).execute()
+
+    def delete_event(self, event_id: int):
+        """Deletes an event"""
+        return self.client.table('event').delete().eq('id', event_id).execute()
+
+    def add_teams_to_event_bulk(
+        self,
+        event_id: int,
+        team_ids: list[int],
+        created_at_iso: str,
+        created_by: str,
+    ):
+        """Adds multiple teams to an event."""
+        rows = [
+            {
+                "id_event": event_id,
+                "id_team": team_id,
+                "created_at": created_at_iso,
+                "created_by": created_by,
+            }
+            for team_id in team_ids
+        ]
+        if not rows:
+            return self.client.table('team_has_event').insert([]).execute()
+        return self.client.table('team_has_event').insert(rows).execute()
+
+    def delete_teams_from_event(self, event_id: int):
+        """Removes all team links for a given event."""
+        return self.client.table('team_has_event').delete().eq('id_event', event_id).execute()
+
+    def get_team_links_by_event_ids(self, event_ids: list[int]):
+        """Returns event-team links with team details."""
+        if not event_ids:
+            return self.client.table('team_has_event').select('id_event, id_team, team(id, name)').limit(0).execute()
+
+        return (
+            self.client.table('team_has_event')
+            .select('id_event, id_team, team(id, name)')
+            .in_('id_event', event_ids)
+            .execute()
+        )
     
     def add_exercise_to_routine(self, routine_exercise: RoutineHasExerciseCreate):
         """Adds an exercise to a routine"""
@@ -395,11 +648,11 @@ class SupabaseIntegration:
             "created_at": routine_exercise.created_at,
             "created_by": routine_exercise.created_by
         }
-        return self.client.table('routine_has_exercice').insert(data).execute()
+        return self.client.table('routine_has_exercise').insert(data).execute()
     
     def remove_exercise_from_routine(self, routine_exercise_id: int):
         """Removes an exercise from a routine"""
-        return self.client.table('routine_has_exercice').delete().eq('id', routine_exercise_id).execute()
+        return self.client.table('routine_has_exercise').delete().eq('id', routine_exercise_id).execute()
     
     def add_excluded_date(self, excluded_date: ExcludedDateCreate):
         """Adds an excluded date to a routine exercise"""
@@ -417,3 +670,31 @@ class SupabaseIntegration:
     def delete_excluded_date(self, excluded_date_id: int):
         """Deletes an excluded date"""
         return self.client.table('routine_exercise_excluded_dates').delete().eq('id', excluded_date_id).execute()
+    
+    # ============= GENERIC METHODS =============
+    
+    def get_all(self, table_name: str):
+        """Generic method to get all records from a table"""
+        return self.client.table(table_name).select('*').is_('deleted_at', 'null').execute().data
+    
+    def get_by_id(self, table_name: str, record_id: int):
+        """Generic method to get a record by ID"""
+        result = self.client.table(table_name).select('*').eq('id', record_id).is_('deleted_at', 'null').execute()
+        return result.data[0] if result.data else None
+    
+    def create(self, table_name: str, data: dict):
+        """Generic method to create a record"""
+        return self.client.table(table_name).insert(data).execute().data[0]
+    
+    def update(self, table_name: str, record_id: int, data: dict):
+        """Generic method to update a record"""
+        return self.client.table(table_name).update(data).eq('id', record_id).execute().data[0]
+    
+    def delete(self, table_name: str, record_id: int):
+        """Generic method to soft delete a record"""
+        from datetime import datetime
+        data = {
+            "deleted_at": datetime.now().isoformat(),
+            "deleted_by": "system"  # TODO: Get from auth context
+        }
+        return self.client.table(table_name).update(data).eq('id', record_id).execute().data[0]

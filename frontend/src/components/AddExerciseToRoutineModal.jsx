@@ -108,7 +108,8 @@ const AddExerciseToRoutineModal = ({ open, onClose, routineId, routineName, user
       
       onClose();
     } catch (err) {
-      setErrors({ submit: err.message || 'Failed to add exercise to routine' });
+      console.error('Failed to add exercise to routine:', err);
+      setErrors({ submit: 'Failed to add exercise to routine. Please try again.' });
     }
   };
 

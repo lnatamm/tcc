@@ -12,6 +12,8 @@ import {
   Alert,
 } from '@mui/material';
 import { useSports, useTypeExercises, useCreateExercise } from '../hooks/useApi';
+import { exerciseService } from '../services/apiService';
+import VideoFileInput from './VideoFileInput';
 
 const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -23,6 +25,8 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
     id_type: '',
   });
   const [errors, setErrors] = useState({});
+  const [videoFile, setVideoFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: sports = [], isLoading: loadingSports } = useSports();
   const { data: typeExercises = [], isLoading: loadingTypes } = useTypeExercises();
@@ -57,6 +61,7 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
     }
 
     try {
+      setSubmitting(true);
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -69,7 +74,22 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
         created_by: 'system',
       };
 
-      const result = await createExercise.mutateAsync(payload);
+      const created = await createExercise.mutateAsync(payload);
+
+      let result = created;
+      if (videoFile && created?.id) {
+        try {
+          result = await exerciseService.uploadVideo(created.id, videoFile);
+        } catch (uploadErr) {
+          // Best-effort rollback to avoid creating an exercise without the intended video
+          try {
+            await exerciseService.delete(created.id);
+          } catch (_) {
+            // ignore rollback errors
+          }
+          throw uploadErr;
+        }
+      }
       
       // Reset form
       setFormData({
@@ -81,13 +101,17 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
         id_type: '',
       });
       setErrors({});
+      setVideoFile(null);
       
       if (onSuccess) {
         onSuccess(result);
       }
       onClose();
     } catch (err) {
-      setErrors({ submit: err.message || 'Failed to create exercise' });
+      console.error('Failed to create exercise:', err);
+      setErrors({ submit: 'Failed to create exercise. Please try again.' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -101,6 +125,7 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
       id_type: '',
     });
     setErrors({});
+    setVideoFile(null);
     onClose();
   };
 
@@ -196,19 +221,21 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
               ))
             )}
           </TextField>
+
+          <VideoFileInput value={videoFile} onChange={setVideoFile} maxBytes={200 * 1024 * 1024} />
         </Box>
       </DialogContent>
       
       <DialogActions>
-        <Button onClick={handleCancel} disabled={createExercise.isPending}>
+        <Button onClick={handleCancel} disabled={createExercise.isPending || submitting}>
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={createExercise.isPending || loadingSports || loadingTypes}
+          disabled={createExercise.isPending || submitting || loadingSports || loadingTypes}
         >
-          {createExercise.isPending ? 'Creating...' : 'Create'}
+          {(createExercise.isPending || submitting) ? 'Creating...' : 'Create'}
         </Button>
       </DialogActions>
     </Dialog>

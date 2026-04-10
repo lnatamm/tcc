@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   teamService, 
   athleteService, 
@@ -7,8 +7,12 @@ import {
   sportService,
   routineService,
   exerciseService,
-  typeExerciseService
+  typeExerciseService,
+  physicalTestService,
+  eventService
 } from '../services/apiService';
+
+import { useAuth } from '../context/AuthContext';
 
 // ============= TEAMS ============
 
@@ -99,11 +103,27 @@ export const useDeleteTeam = () => {
 
 // ============= ATHLETES =============
 
-export const useAthletes = () => {
+export const useAthletes = (enabled = true) => {
   return useQuery({
     queryKey: ['athletes'],
     queryFn: athleteService.getAll,
+    enabled,
   });
+};
+
+export const useAthleteByUserId = (userId) => {
+  return useQuery({
+    queryKey: ['athlete', 'by-user', userId],
+    queryFn: () => athleteService.getByUserId(userId),
+    enabled: !!userId,
+    retry: false,
+  });
+};
+
+export const useMyAthlete = () => {
+  const { user } = useAuth();
+  const isAthlete = String(user?.user_type_name || '').trim().toLowerCase() === 'athlete';
+  return useAthleteByUserId(isAthlete ? user?.id : null);
 };
 
 export const useAthlete = (id) => {
@@ -111,6 +131,14 @@ export const useAthlete = (id) => {
     queryKey: ['athlete', id],
     queryFn: () => athleteService.getById(id),
     enabled: !!id,
+  });
+};
+
+export const useAthleteTeams = (athleteId) => {
+  return useQuery({
+    queryKey: ['athlete', athleteId, 'teams'],
+    queryFn: () => athleteService.getTeams(athleteId),
+    enabled: !!athleteId,
   });
 };
 
@@ -391,6 +419,31 @@ export const useRoutinesByAthlete = (athleteId) => {
   });
 };
 
+export const useRoutineExercisesByAthlete = (athleteId) => {
+  const routinesQuery = useRoutinesByAthlete(athleteId);
+  const routines = routinesQuery.data || [];
+
+  const routineExercisesQueries = useQueries({
+    queries: routines.map((routine) => ({
+      queryKey: ['routine-exercises', routine.id],
+      queryFn: () => routineService.getExercises(routine.id),
+      enabled: !!routine?.id,
+    })),
+  });
+
+  const isLoading = routinesQuery.isLoading || routineExercisesQueries.some((q) => q.isLoading);
+  const error = routinesQuery.error || routineExercisesQueries.find((q) => q.error)?.error;
+
+  const routineExercises = routineExercisesQueries.flatMap((q) => q.data || []);
+
+  return {
+    routines: routinesQuery.data || [],
+    routineExercises,
+    isLoading,
+    error,
+  };
+};
+
 export const useRoutineWithExercises = (routineId) => {
   const { data: routine, ...routineQuery } = useRoutine(routineId);
   
@@ -449,6 +502,83 @@ export const useDeleteRoutine = () => {
   });
 };
 
+// ============= PHYSICAL TESTS =============
+
+export const usePhysicalTestsByAthlete = (athleteId) => {
+  return useQuery({
+    queryKey: ['physical-tests', 'athlete', athleteId],
+    queryFn: () => physicalTestService.getByAthlete(athleteId),
+    enabled: !!athleteId,
+  });
+};
+
+export const usePhysicalTestExercises = (physicalTestId) => {
+  return useQuery({
+    queryKey: ['physical-tests', physicalTestId, 'exercises'],
+    queryFn: () => physicalTestService.getExercises(physicalTestId),
+    enabled: !!physicalTestId,
+  });
+};
+
+export const useSchedulePhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: physicalTestService.schedule,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', 'athlete', variables.id_athlete] });
+    },
+  });
+};
+
+export const useAddExercisesToPhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ physicalTestId, payload }) => physicalTestService.addExercises(physicalTestId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', variables.physicalTestId, 'exercises'] });
+    },
+  });
+};
+
+export const useDeletePhysicalTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ physicalTestId, athleteId }) => physicalTestService.delete(physicalTestId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['physical-tests', 'athlete', variables.athleteId] });
+    },
+  });
+};
+
+// ============= EVENTS =============
+
+export const useEvents = () => {
+  return useQuery({
+    queryKey: ['events'],
+    queryFn: eventService.getAll,
+  });
+};
+
+export const useCreateEvent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: eventService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+};
+
+export const useUpdateEvent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => eventService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+};
+
 export const useAddExerciseToRoutine = () => {
   const queryClient = useQueryClient();
   
@@ -487,5 +617,79 @@ export const useTypeExercise = (id) => {
     queryKey: ['type-exercise', id],
     queryFn: () => typeExerciseService.getById(id),
     enabled: !!id,
+  });
+};
+
+// ============= EXERCISE STATS =============
+
+export const useTodayExercises = (athleteId) => {
+  return useQuery({
+    queryKey: ['today-exercises', athleteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/exercise-stats/today/${athleteId}`);
+      if (!response.ok) throw new Error('Failed to fetch today exercises');
+      return response.json();
+    },
+    enabled: !!athleteId,
+    refetchInterval: 2000, // Refetch every 2 seconds for real-time updates
+  });
+};
+
+export const useStartExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await fetch('/api/exercise-stats/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to start exercise');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+      queryClient.refetchQueries({ queryKey: ['today-exercises'] });
+    },
+  });
+};
+
+export const useUpdateExerciseProgress = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ exerciseStatsId, data }) => {
+      const response = await fetch(`/api/exercise-stats/${exerciseStatsId}/progress`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update exercise progress');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+    },
+  });
+};
+
+export const useEndExercise = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ exerciseHistoryId, data }) => {
+      const response = await fetch(`/api/exercise-stats/history/${exerciseHistoryId}/end`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to end exercise');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-exercises'] });
+      queryClient.refetchQueries({ queryKey: ['today-exercises'] });
+    },
   });
 };

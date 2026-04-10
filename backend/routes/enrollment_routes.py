@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from datetime import datetime
 from models.enrollment_models import EnrollmentBase, EnrollmentCreate, EnrollmentUpdate
 from controllers.enrollment_controller import EnrollmentController
 
@@ -49,9 +50,11 @@ def get_enrollments_by_athlete(athlete_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_enrollments.post("/", status_code=201)
-def create_enrollment(enrollment: EnrollmentCreate):
+def create_enrollment(enrollment: EnrollmentCreate, user: str = Query("system")):
     """Creates a new enrollment"""
     try:
+        enrollment.created_at = enrollment.created_at or datetime.utcnow().isoformat()
+        enrollment.created_by = enrollment.created_by or user or "system"
         controller = EnrollmentController()
         result = controller.create_enrollment(enrollment)
         return result.data[0] if result.data else None
