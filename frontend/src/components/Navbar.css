@@ -78,20 +78,3 @@
 .sidebar-footer {
   margin-top: auto;
 }
-
-.sidebar-logout {
-  width: 100%;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  font-weight: 700;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 160ms ease;
-}
-
-.sidebar-logout:hover {
-  background: #ef4444;
-  color: #ffffff;
-  border: none;
-}

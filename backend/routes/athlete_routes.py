@@ -28,6 +28,21 @@ def get_athlete(athlete_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_athletes.get("/by-user/{user_id}")
+def get_athlete_by_user(user_id: int):
+    """Returns an athlete profile linked to a user ID (athlete.id_user)."""
+    try:
+        controller = AthleteController()
+        result = controller.get_athlete_by_user_id(user_id)
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Athlete not found")
+        return result.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 @api_athletes.get("/{athlete_id}/photo")
 def get_athlete_photo(athlete_id: int):
@@ -81,7 +96,7 @@ def get_teams_by_athlete(athlete_id: int):
     """Returns all teams of the athlete"""
     try:
         controller = AthleteController()
-        result = controller.get_teams_by_athlete(athlete_id)
+        result = controller.get_teams_by_athlete_id(athlete_id)
         return result.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

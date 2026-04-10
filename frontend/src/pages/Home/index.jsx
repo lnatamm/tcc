@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './style.css';
 import {useTeamsWithAthletes } from '../../hooks/useApi';
 import AddTeamModal from '../../components/AddTeamModal';
 import AthleteRoutinesModal from '../../components/AthleteRoutinesModal';
-import { Avatar } from '@mui/material';
+import AddAthleteToTeamModal from '../../components/AddAthleteToTeamModal';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import api from '../../api';
 
 const Home = () => {
@@ -12,14 +27,17 @@ const Home = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [routinesModalOpen, setRoutinesModalOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+  const [addToTeam, setAddToTeam] = useState(null);
   const [athletePhotos, setAthletePhotos] = useState({});
   const { data: teams = [], isLoading: loading, error } = useTeamsWithAthletes();
-  const navigate = useNavigate();
   
   const userName = "Derek";
 
   // Load athlete photos as blob URLs
   useEffect(() => {
+    let cancelled = false;
+    const urlsToRevoke = [];
+
     const loadAthletePhotos = async () => {
       const photos = {};
       for (const team of teams) {
@@ -30,6 +48,7 @@ const Home = () => {
                 responseType: 'blob'
               });
               const imageUrl = URL.createObjectURL(response.data);
+              urlsToRevoke.push(imageUrl);
               photos[athlete.id] = imageUrl;
             } catch (err) {
               console.error(`Error loading photo for athlete ${athlete.id}:`, err);
@@ -37,6 +56,12 @@ const Home = () => {
           }
         }
       }
+
+      if (cancelled) {
+        urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
+        return;
+      }
+
       setAthletePhotos(photos);
     };
 
@@ -44,13 +69,12 @@ const Home = () => {
       loadAthletePhotos();
     }
 
-    // Cleanup: revogar URLs de blob quando o componente desmontar
     return () => {
-      Object.values(athletePhotos).forEach(url => {
-        if (url) URL.revokeObjectURL(url);
-      });
+      cancelled = true;
+      urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [teams]);
+
   const toggleTeam = (teamId) => {
     setExpandedTeam(expandedTeam === teamId ? null : teamId);
   };
@@ -66,112 +90,128 @@ const Home = () => {
   };
 
   return (
-    <div className="home">
-      <div className="home-header">
-        <div className="user-greeting">
-          <div className="user-avatar"></div>
-          <h2>Good morning, {userName}</h2>
-        </div>
-      </div>
+    <Box className="home">
+      <Container maxWidth="md" sx={{ py: 4, pt: 10 }}>
+        <Paper variant="outlined" sx={{ p: 3, mb: 2 }}>
+          <Stack spacing={0.5}>
+            <Typography variant="h5" fontWeight={700}>
+              Teams
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Manage teams and athletes.
+            </Typography>
+          </Stack>
+        </Paper>
 
-      <div className="quick-actions">
-        <button className="action-card" onClick={() => navigate('/routines')}>Routines</button>
-        <button className="action-card">Sports</button>
-        <button className="action-card">Exercises</button>
-        <button className="action-card">Dashboard</button>
-      </div>
-
-      <div className="teams-section">
-        <h3 className="section-title">Teams</h3>
-        
         {loading && (
-          <div className="loading-message">Loading teams...</div>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <CircularProgress size={18} />
+              <Typography>Loading teams...</Typography>
+            </Stack>
+          </Paper>
         )}
-        
-        {error && (
-          <div className="error-message">
-            Unable to load teams. Please try again later.
-          </div>
-        )}
-        
-        {!loading && !error && teams.length === 0 && (
-          <div className="empty-message">No teams found.</div>
-        )}
-        
-        {!loading && !error && teams.map((team) => (
-          <div key={team.id} className="team-card">
-            <div 
-              className="team-header"
-              onClick={() => toggleTeam(team.id)}
-            >
-              <span className="team-name">{team.name}</span>
-              <span
-                className="team-toggle"
-                aria-hidden="true"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {/* Chevron icon — rotates smoothly when expanded */}
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  style={{
-                    transform: expandedTeam === team.id ? 'rotate(90deg)' : 'rotate(0deg)',
-                    transition: 'transform 160ms ease',
-                    display: 'block',
-                    color: '#555'
-                  }}
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" fill="currentColor" />
-                </svg>
-              </span>
-            </div>
-            
-            {expandedTeam === team.id && (
-              <div className="team-content">
-                {team.athletes && team.athletes.length > 0 ? (
-                  team.athletes.map((athlete) => (
-                    <div key={athlete.id} className="athlete-item">
-                      <Avatar
-                        src={athletePhotos[athlete.id]}
-                        alt={athlete.name}
-                        sx={{ width: 40, height: 40 }}
-                      >
-                        {athlete.name.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <span className="athlete-name">{athlete.name}</span>
-                      <button 
-                        className="view-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewRoutines(athlete);
-                        }}
-                      >
-                        View
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty-athletes">No athletes enrolled.</div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
 
-        <button 
-          className="add-team-btn"
-          onClick={() => setModalOpen(true)}
-        >
-          Add Team
-        </button>
-      </div>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Unable to load teams. Please try again later.
+          </Alert>
+        )}
+
+        {!loading && !error && teams.length === 0 && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No teams found.
+          </Alert>
+        )}
+
+        {!loading && !error && (
+          <Stack spacing={1.25}>
+            {teams.map((team) => {
+              const athleteCount = Array.isArray(team?.athletes) ? team.athletes.length : 0;
+              const expanded = expandedTeam === team.id;
+
+              return (
+                <Accordion
+                  key={team.id}
+                  expanded={expanded}
+                  onChange={() => toggleTeam(team.id)}
+                  disableGutters
+                  elevation={0}
+                  sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, '&:before': { display: 'none' } }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
+                      <Typography fontWeight={700} sx={{ flex: 1 }}>
+                        {team.name}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={`${athleteCount} athlete${athleteCount === 1 ? '' : 's'}`}
+                        variant="outlined"
+                      />
+                    </Stack>
+                  </AccordionSummary>
+
+                  <AccordionDetails>
+                    <Stack spacing={1.5}>
+                      <Stack direction="row" justifyContent="flex-end">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => setAddToTeam(team)}
+                        >
+                          Add athlete
+                        </Button>
+                      </Stack>
+
+                      {team.athletes && team.athletes.length > 0 ? (
+                        <Stack spacing={1}>
+                          {team.athletes.map((athlete) => (
+                            <Paper key={athlete.id} variant="outlined" sx={{ p: 1.25, borderRadius: 2 }}>
+                              <Stack direction="row" spacing={1.5} alignItems="center">
+                                <Avatar
+                                  src={athletePhotos[athlete.id]}
+                                  alt={athlete.name}
+                                  sx={{ width: 40, height: 40 }}
+                                >
+                                  {athlete.name.charAt(0).toUpperCase()}
+                                </Avatar>
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography fontWeight={700}>{athlete.name}</Typography>
+                                </Box>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => handleViewRoutines(athlete)}
+                                >
+                                  View routines
+                                </Button>
+                              </Stack>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No athletes enrolled.
+                        </Typography>
+                      )}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
+
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => setModalOpen(true)}
+              sx={{ mt: 1 }}
+            >
+              Add team
+            </Button>
+          </Stack>
+        )}
+      </Container>
 
       <AddTeamModal 
         open={modalOpen}
@@ -184,7 +224,15 @@ const Home = () => {
         athlete={selectedAthlete}
         userName={userName}
       />
-    </div>
+
+      <AddAthleteToTeamModal
+        open={!!addToTeam}
+        onClose={() => setAddToTeam(null)}
+        teamId={addToTeam?.id}
+        teamName={addToTeam?.name}
+        existingAthleteIds={(addToTeam?.athletes || []).map((a) => a?.id).filter(Boolean)}
+      />
+    </Box>
   );
 };
 
