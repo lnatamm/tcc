@@ -3,8 +3,9 @@ import './style.css';
 import SearchIcon from '@mui/icons-material/Search';
 import EventIcon from '@mui/icons-material/Event';
 
-import { useEvents } from '../../hooks/useApi';
+import { useEvents, useDeleteEvent } from '../../hooks/useApi';
 import AddEventModal from '../../components/AddEventModal';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 const formatDate = (dateIso) => {
   if (!dateIso) return 'No date';
@@ -25,6 +26,7 @@ const ITEMS_PER_PAGE = 10;
 const EventsPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [search, setSearch] = useState('');
   const [showExpired, setShowExpired] = useState(false);
@@ -32,6 +34,7 @@ const EventsPage = () => {
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const { data: events = [], isLoading, error } = useEvents();
+  const deleteEvent = useDeleteEvent();
 
   const normalizedEvents = useMemo(() => {
     const today = toMidnightDate(new Date());
@@ -102,6 +105,19 @@ const EventsPage = () => {
   const totalEvents = events.length;
   const upcomingEvents = normalizedEvents.filter((event) => !event.isExpired).length;
   const expiredEvents = normalizedEvents.filter((event) => event.isExpired).length;
+
+  const handleDeleteEvent = () => {
+    if (!selectedEvent?.id) {
+      return;
+    }
+
+    deleteEvent.mutate(selectedEvent.id, {
+      onSuccess: () => {
+        setDeleteOpen(false);
+        setSelectedEvent(null);
+      },
+    });
+  };
 
   return (
     <div className="events-page">
@@ -249,16 +265,28 @@ const EventsPage = () => {
                       </div>
                     </td>
                     <td>
-                      <button
-                        type="button"
-                        className="edit-event-btn"
-                        onClick={() => {
-                          setSelectedEvent(event);
-                          setEditOpen(true);
-                        }}
-                      >
-                        Edit
-                      </button>
+                      <div className="event-actions">
+                        <button
+                          type="button"
+                          className="edit-event-btn"
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setEditOpen(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="delete-event-btn"
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setDeleteOpen(true);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -312,6 +340,22 @@ const EventsPage = () => {
         }}
         mode="edit"
         event={selectedEvent}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteOpen}
+        onClose={() => {
+          if (deleteEvent.isPending) {
+            return;
+          }
+          setDeleteOpen(false);
+          setSelectedEvent(null);
+        }}
+        onConfirm={handleDeleteEvent}
+        title="Delete Event"
+        message="Are you sure you want to delete this event?"
+        itemName={selectedEvent?.name}
+        loading={deleteEvent.isPending}
       />
     </div>
   );

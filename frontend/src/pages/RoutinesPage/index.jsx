@@ -149,21 +149,6 @@ const RoutinesPage = () => {
         <div className="routines-summary-subtitle">
           Review and open each athlete's routine panel from a single list.
         </div>
-
-        <div className="routines-summary-stats">
-          <div className="routines-stat-item">
-            <div className="routines-stat-label">Total athletes</div>
-            <div className="routines-stat-value">{athletes.length}</div>
-          </div>
-          <div className="routines-stat-item">
-            <div className="routines-stat-label">Filtered results</div>
-            <div className="routines-stat-value">{filteredAthletes.length}</div>
-          </div>
-          <div className="routines-stat-item">
-            <div className="routines-stat-label">Open routine panels</div>
-            <div className="routines-stat-value">{selectedAthlete ? 1 : 0}</div>
-          </div>
-        </div>
       </div>
 
       <div className="routines-table-card">

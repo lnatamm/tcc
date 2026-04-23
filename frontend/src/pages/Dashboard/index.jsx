@@ -67,9 +67,6 @@ export default function Dashboard() {
       try {
         const response = await api.get('/athletes');
         setAthletes(response.data);
-        if (response.data.length > 0) {
-          setSelectedAthlete(response.data[0].id);
-        }
       } catch (error) {
         console.error('Error loading athletes:', error);
         setLoadError('Error loading athletes. Please try again.');
@@ -164,20 +161,22 @@ export default function Dashboard() {
           Visualize and analyze athlete performance metrics with dedicated cards for metrics and charts.
         </div>
 
-        <div className="dashboard-summary-stats">
-          <div className="dashboard-stat-item">
-            <div className="dashboard-stat-label">Total metrics</div>
-            <div className="dashboard-stat-value">{metrics.length}</div>
+        {selectedAthlete && (
+          <div className="dashboard-summary-stats">
+            <div className="dashboard-stat-item">
+              <div className="dashboard-stat-label">Total metrics</div>
+              <div className="dashboard-stat-value">{metrics.length}</div>
+            </div>
+            <div className="dashboard-stat-item">
+              <div className="dashboard-stat-label">Simple metrics</div>
+              <div className="dashboard-stat-value">{simpleMetrics.length}</div>
+            </div>
+            <div className="dashboard-stat-item">
+              <div className="dashboard-stat-label">Aggregated metrics</div>
+              <div className="dashboard-stat-value">{aggregatedMetrics.length}</div>
+            </div>
           </div>
-          <div className="dashboard-stat-item">
-            <div className="dashboard-stat-label">Simple metrics</div>
-            <div className="dashboard-stat-value">{simpleMetrics.length}</div>
-          </div>
-          <div className="dashboard-stat-item">
-            <div className="dashboard-stat-label">Aggregated metrics</div>
-            <div className="dashboard-stat-value">{aggregatedMetrics.length}</div>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="dashboard-controls-card">
@@ -224,6 +223,15 @@ export default function Dashboard() {
             <div className="dashboard-empty-title">Loading metrics</div>
             <div className="dashboard-empty-text">
               Fetching metric data for {selectedAthleteName}.
+            </div>
+          </div>
+        </div>
+      ) : !selectedAthlete ? (
+        <div className="dashboard-section-card">
+          <div className="dashboard-empty-state">
+            <div className="dashboard-empty-title">Select an athlete</div>
+            <div className="dashboard-empty-text">
+              Choose an athlete to review metrics and charts.
             </div>
           </div>
         </div>

@@ -172,20 +172,22 @@ const PhysicalTestsPage = () => {
             : 'Schedule and track tests for each athlete from one panel.'}
         </div>
 
-        <div className="physical-tests-summary-stats">
-          <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Total tests</div>
-            <div className="physical-tests-stat-value">{athleteId ? normalizedTests.length : 0}</div>
+        {athleteId && (
+          <div className="physical-tests-summary-stats">
+            <div className="physical-tests-stat-item">
+              <div className="physical-tests-stat-label">Total tests</div>
+              <div className="physical-tests-stat-value">{normalizedTests.length}</div>
+            </div>
+            <div className="physical-tests-stat-item">
+              <div className="physical-tests-stat-label">Active tests</div>
+              <div className="physical-tests-stat-value">{activeCount}</div>
+            </div>
+            <div className="physical-tests-stat-item">
+              <div className="physical-tests-stat-label">Expired tests</div>
+              <div className="physical-tests-stat-value">{expiredCount}</div>
+            </div>
           </div>
-          <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Active tests</div>
-            <div className="physical-tests-stat-value">{athleteId ? activeCount : 0}</div>
-          </div>
-          <div className="physical-tests-stat-item">
-            <div className="physical-tests-stat-label">Expired tests</div>
-            <div className="physical-tests-stat-value">{athleteId ? expiredCount : 0}</div>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="physical-tests-card">

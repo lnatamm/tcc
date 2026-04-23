@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
+import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -11,12 +11,21 @@ import { Button } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
+const normalizeUserTypeName = (raw) => {
+  const value = String(raw || '').trim().toLowerCase();
+
+  if (['athlete', 'atleta', 'aluno'].includes(value)) return 'athlete';
+  if (['coach', 'treinador', 'professor'].includes(value)) return 'coach';
+
+  return value;
+};
+
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const isAthlete = String(user?.user_type_name || '').trim().toLowerCase() === 'athlete';
+  const isAthlete = normalizeUserTypeName(user?.user_type_name) === 'athlete';
 
   // Hide the sidebar on the login / register pages
   if (
@@ -40,16 +49,26 @@ const Navbar = () => {
       </div>
 
       <nav className="sidebar-nav">
-        <Link
-          to="/home"
-          className={`sidebar-link ${location.pathname === '/home' ? 'active' : ''}`}
-        >
-          <HomeIcon sx={{ fontSize: 20 }} />
-          <span>Home</span>
-        </Link>
+        {isAthlete && (
+          <Link
+            to="/home"
+            className={`sidebar-link ${location.pathname === '/home' ? 'active' : ''}`}
+          >
+            <HomeIcon sx={{ fontSize: 20 }} />
+            <span>Home</span>
+          </Link>
+        )}
 
         {!isAthlete && (
           <>
+            <Link
+              to="/athlete-control"
+              className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
+            >
+              <PersonIcon sx={{ fontSize: 20 }} />
+              <span>Athletes & Teams</span>
+            </Link>
+
             <Link
               to="/routines"
               className={`sidebar-link ${location.pathname === '/routines' ? 'active' : ''}`}
@@ -92,14 +111,6 @@ const Navbar = () => {
             >
               <EventIcon sx={{ fontSize: 20 }} />
               <span>Events</span>
-            </Link>
-
-            <Link
-              to="/athlete-control"
-              className={`sidebar-link ${location.pathname === '/athlete-control' ? 'active' : ''}`}
-            >
-              <PersonIcon sx={{ fontSize: 20 }} />
-              <span>Athletes & Teams</span>
             </Link>
           </>
         )}

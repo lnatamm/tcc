@@ -297,6 +297,31 @@
   color: #1d4ed8;
 }
 
+.event-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delete-event-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+
+.delete-event-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #991b1b;
+}
+
 .empty-row {
   padding: 36px 0;
   text-align: center;

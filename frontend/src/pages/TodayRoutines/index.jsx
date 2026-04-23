@@ -55,33 +55,32 @@ const TodayRoutines = () => {
     <div className="today-routines-page">
       <div className="today-summary-card">
         <div className="today-summary-header">
-          <div className="today-summary-icon">
-            <TodayIcon fontSize="medium" />
-          </div>
           <div>
             <h1 className="today-summary-title">Today's Workout</h1>
             <div className="today-summary-subtitle">{todayFormatted}</div>
           </div>
         </div>
 
-        <div className="today-summary-stats">
-          <div className="today-stat-item">
-            <div className="today-stat-label">completed</div>
-            <div className="today-stat-value">{selectedAthleteId ? counts.completed : 0}</div>
+        {selectedAthleteId && (
+          <div className="today-summary-stats">
+            <div className="today-stat-item">
+              <div className="today-stat-label">completed</div>
+              <div className="today-stat-value">{counts.completed}</div>
+            </div>
+            <div className="today-stat-item">
+              <div className="today-stat-label">in progress</div>
+              <div className="today-stat-value">{counts['in-progress']}</div>
+            </div>
+            <div className="today-stat-item">
+              <div className="today-stat-label">pending</div>
+              <div className="today-stat-value">{counts['not-started']}</div>
+            </div>
+            <div className="today-stat-item">
+              <div className="today-stat-label">progress</div>
+              <div className="today-stat-value">{`${completionPercentage}%`}</div>
+            </div>
           </div>
-          <div className="today-stat-item">
-            <div className="today-stat-label">in progress</div>
-            <div className="today-stat-value">{selectedAthleteId ? counts['in-progress'] : 0}</div>
-          </div>
-          <div className="today-stat-item">
-            <div className="today-stat-label">pending</div>
-            <div className="today-stat-value">{selectedAthleteId ? counts['not-started'] : 0}</div>
-          </div>
-          <div className="today-stat-item">
-            <div className="today-stat-label">progress</div>
-            <div className="today-stat-value">{selectedAthleteId ? `${completionPercentage}%` : '0%'}</div>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="today-panel-card">

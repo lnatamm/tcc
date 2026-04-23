@@ -358,6 +358,11 @@ export const eventService = {
     });
     return response.data;
   },
+
+  delete: async (id) => {
+    const response = await api.delete(`/events/${id}`);
+    return response.data;
+  },
 };
 
 // Type Exercises

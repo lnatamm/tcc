@@ -127,3 +127,8 @@ class EventController:
             for link in links
         ]
         return event_data
+
+    def delete_event(self, event_id: int):
+        """Deletes an event and all linked team associations."""
+        self.supabase_integration.delete_teams_from_event(event_id)
+        return self.supabase_integration.delete_event(event_id)

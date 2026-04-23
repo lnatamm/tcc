@@ -71,3 +71,13 @@ def update_event(event_id: int, payload: EventCreateRequest, user: str = Query(.
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_events.delete("/{event_id}", status_code=204)
+def delete_event(event_id: int):
+    """Deletes an event and its linked teams."""
+    try:
+        controller = EventController()
+        controller.delete_event(event_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

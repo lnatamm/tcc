@@ -579,6 +579,16 @@ export const useUpdateEvent = () => {
   });
 };
 
+export const useDeleteEvent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: eventService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+};
+
 export const useAddExerciseToRoutine = () => {
   const queryClient = useQueryClient();
   
