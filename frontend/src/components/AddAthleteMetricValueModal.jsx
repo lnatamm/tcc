@@ -34,8 +34,10 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
   const fetchBaseMetrics = async () => {
     try {
       const response = await api.get('/metrics');
-      // Get all metrics (both simple and aggregated)
-      setBaseMetrics(response.data);
+      // Only simple metrics can be attached/set directly.
+      // Aggregated metrics appear automatically when their components have values.
+      const simpleMetrics = (response.data || []).filter((metric) => !metric.aggregated);
+      setBaseMetrics(simpleMetrics);
     } catch (error) {
       console.error('Error loading metrics:', error);
     }
@@ -62,10 +64,9 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
       newErrors.selectedMetric = 'Please select a metric';
     }
 
-    // Value is only required for non-aggregated metrics
-    const metric = baseMetrics.find(m => m.id === parseInt(selectedMetric));
-    if (metric && !metric.aggregated) {
-      if (!value || isNaN(parseFloat(value))) {
+    // Value is optional. If provided, it must be a number.
+    if (value !== '' && value !== null && value !== undefined) {
+      if (isNaN(parseFloat(value))) {
         newErrors.value = 'Please enter a valid numeric value';
       }
     }
@@ -81,11 +82,10 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
 
     setLoading(true);
     try {
-      const metric = baseMetrics.find(m => m.id === parseInt(selectedMetric));
       await api.post('/athlete-metrics', {
         id_metric: parseInt(selectedMetric),
         id_athlete: athleteId,
-        value: metric?.aggregated ? null : parseFloat(value),
+        value: value === '' ? null : parseFloat(value),
         created_by: 'system'
       });
 
@@ -110,7 +110,7 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Add Metric Value</DialogTitle>
+      <DialogTitle>Attach Metric to Athlete</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
           {errors.submit && (
@@ -137,13 +137,6 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
                 <MenuItem key={metric.id} value={metric.id}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {metric.name}
-                    {metric.aggregated && (
-                      <Chip 
-                        label="Aggregated" 
-                        size="small" 
-                        color="primary"
-                      />
-                    )}
                     <Chip 
                       label={metric.id_sport ? `Sport: ${metric.id_sport}` : 'General'} 
                       size="small" 
@@ -168,32 +161,24 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
             </Alert>
           )}
 
-          {selectedMetricData && !selectedMetricData.aggregated && (
+          {selectedMetricData && (
             <TextField
-              label="Value"
+              label="Initial Value (optional)"
               fullWidth
-              required
               type="number"
               value={value}
               onChange={(e) => handleValueChange(e.target.value)}
               error={!!errors.value}
-              helperText={errors.value || 'Enter the numeric value for this metric'}
+              helperText={errors.value || 'Leave empty to attach the metric without a value'}
               disabled={loading}
             />
           )}
 
-          {selectedMetricData && selectedMetricData.aggregated && (
+          {selectedMetricData && (
             <Alert severity="info">
               <Typography variant="body2">
-                This is an <strong>aggregated metric</strong>. Its value will be calculated automatically based on the formula and component metrics.
-              </Typography>
-            </Alert>
-          )}
-
-          {selectedMetricData && !selectedMetricData.aggregated && (
-            <Alert severity="info">
-              <Typography variant="body2">
-                Multiple values for the same metric will be <strong>summed together</strong> when calculating aggregated metrics.
+                If you provide a value, it will <strong>overwrite</strong> the athlete's current value for this metric.
+                If you leave it empty, the metric will be attached with <strong>no value</strong>.
               </Typography>
             </Alert>
           )}
@@ -209,7 +194,7 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
           disabled={loading}
           startIcon={loading && <CircularProgress size={20} />}
         >
-          {loading ? 'Adding...' : 'Add Value'}
+          {loading ? 'Saving...' : 'Attach'}
         </Button>
       </DialogActions>
     </Dialog>

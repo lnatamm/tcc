@@ -303,6 +303,52 @@ CREATE TABLE "formula"(
 ALTER TABLE
     "formula" ADD PRIMARY KEY("id");
 
+CREATE TABLE "goal_type"(
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "goal_type" ADD PRIMARY KEY("id");
+
+CREATE TABLE "kpi"(
+    "id" SERIAL NOT NULL,
+    "id_metric" BIGINT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "kpi" ADD PRIMARY KEY("id");
+
+CREATE TABLE "athlete_has_kpi"(
+    "id" SERIAL NOT NULL,
+    "id_kpi" BIGINT NOT NULL,
+    "id_athlete" BIGINT NOT NULL,
+    "id_goal_type" BIGINT NOT NULL,
+    "goal_value" NUMERIC(10, 2) NOT NULL,
+    "goal_date" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    "created_by" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "updated_by" TEXT NULL,
+    "deleted_at" TIMESTAMP(0) WITHOUT TIME ZONE NULL,
+    "deleted_by" TEXT NULL
+);
+ALTER TABLE
+    "athlete_has_kpi" ADD PRIMARY KEY("id");
+
 CREATE TABLE user_type (
   "id" serial not null primary key,
   "name" text not null,
@@ -316,53 +362,76 @@ CREATE TABLE user_type (
 
 ALTER TABLE
     "users" ADD CONSTRAINT "users_id_user_type_foreign" FOREIGN KEY("id_user_type") REFERENCES "user_type"("id");
+
 ALTER TABLE
     "metric" ADD CONSTRAINT "metric_id_formula_foreign" FOREIGN KEY("id_formula") REFERENCES "formula"("id");
 ALTER TABLE
     "metric" ADD CONSTRAINT "metric_id_sport_foreign" FOREIGN KEY("id_sport") REFERENCES "sport"("id");
+
 ALTER TABLE
     "coach" ADD CONSTRAINT "coach_id_level_foreign" FOREIGN KEY("id_level") REFERENCES "level"("id");
 ALTER TABLE
     "coach" ADD CONSTRAINT "coach_id_user_foreign" FOREIGN KEY("id_user") REFERENCES "users"("id");
+
 ALTER TABLE
     "athlete" ADD CONSTRAINT "athlete_id_user_foreign" FOREIGN KEY("id_user") REFERENCES "users"("id");
 ALTER TABLE
     "athlete_has_metric" ADD CONSTRAINT "athlete_has_metric_id_metric_foreign" FOREIGN KEY("id_metric") REFERENCES "metric"("id");
+
 ALTER TABLE
     "exercise" ADD CONSTRAINT "exercise_id_type_foreign" FOREIGN KEY("id_type") REFERENCES "type_exercise"("id");
+
 ALTER TABLE
     "team" ADD CONSTRAINT "team_id_sport_foreign" FOREIGN KEY("id_sport") REFERENCES "sport"("id");
 ALTER TABLE
     "enrollment" ADD CONSTRAINT "enrollment_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+    
 ALTER TABLE
     "routine_exercise_excluded_dates" ADD CONSTRAINT "routine_exercise_excluded_dates_id_routine_has_exercise_foreign" FOREIGN KEY("id_routine_has_exercise") REFERENCES "routine_has_exercise"("id");
 ALTER TABLE
     "routine" ADD CONSTRAINT "routine_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+
 ALTER TABLE
     "physical_test" ADD CONSTRAINT "physical_test_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+
 ALTER TABLE
     "team" ADD CONSTRAINT "team_id_coach_foreign" FOREIGN KEY("id_coach") REFERENCES "coach"("id");
+
 ALTER TABLE
     "routine_has_exercise" ADD CONSTRAINT "routine_has_exercise_id_exercise_foreign" FOREIGN KEY("id_exercise") REFERENCES "exercise"("id");
 ALTER TABLE
     "physical_test_has_exercise" ADD CONSTRAINT "physical_test_has_exercise_id_physical_test_foreign" FOREIGN KEY("id_physical_test") REFERENCES "physical_test"("id");
 ALTER TABLE
     "physical_test_has_exercise" ADD CONSTRAINT "physical_test_has_exercise_id_exercise_foreign" FOREIGN KEY("id_exercise") REFERENCES "exercise"("id");
+
 ALTER TABLE
     "team_has_event" ADD CONSTRAINT "team_has_event_id_team_foreign" FOREIGN KEY("id_team") REFERENCES "team"("id");
 ALTER TABLE
     "team_has_event" ADD CONSTRAINT "team_has_event_id_event_foreign" FOREIGN KEY("id_event") REFERENCES "event"("id");
+    
 ALTER TABLE
     "exercise_history" ADD CONSTRAINT "exercise_history_id_exercise_stats_foreign" FOREIGN KEY("id_exercise_stats") REFERENCES "exercise_stats"("id");
 ALTER TABLE
     "routine_has_exercise" ADD CONSTRAINT "routine_has_exercise_id_routine_foreign" FOREIGN KEY("id_routine") REFERENCES "routine"("id");
+
 ALTER TABLE
     "enrollment" ADD CONSTRAINT "enrollment_id_team_foreign" FOREIGN KEY("id_team") REFERENCES "team"("id");
+
 ALTER TABLE
     "exercise" ADD CONSTRAINT "exercise_id_sport_foreign" FOREIGN KEY("id_sport") REFERENCES "sport"("id");
+
 ALTER TABLE
     "metric" ADD CONSTRAINT "metric_id_coach_foreign" FOREIGN KEY("id_coach") REFERENCES "coach"("id");
 ALTER TABLE
     "athlete_has_metric" ADD CONSTRAINT "athlete_has_metric_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
 ALTER TABLE
     "exercise_history" ADD CONSTRAINT "exercise_history_id_routine_has_exercise_foreign" FOREIGN KEY("id_routine_has_exercise") REFERENCES "routine_has_exercise"("id");
+
+ALTER TABLE
+    "kpi" ADD CONSTRAINT "kpi_id_metric_foreign" FOREIGN KEY("id_metric") REFERENCES "metric"("id");
+ALTER TABLE
+    "athlete_has_kpi" ADD CONSTRAINT "athlete_has_kpi_id_kpi_foreign" FOREIGN KEY("id_kpi") REFERENCES "kpi"("id");
+ALTER TABLE
+    "athlete_has_kpi" ADD CONSTRAINT "athlete_has_kpi_id_athlete_foreign" FOREIGN KEY("id_athlete") REFERENCES "athlete"("id");
+ALTER TABLE
+    "athlete_has_kpi" ADD CONSTRAINT "athlete_has_kpi_id_goal_type_foreign" FOREIGN KEY("id_goal_type") REFERENCES "goal_type"("id");

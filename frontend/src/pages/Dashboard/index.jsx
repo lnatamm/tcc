@@ -23,6 +23,7 @@ import AddMetricModal from '../../components/AddMetricModal';
 import EditMetricModal from '../../components/EditMetricModal';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import AddAthleteMetricValueModal from '../../components/AddAthleteMetricValueModal';
+import AssignAthleteKpiModal from '../../components/AssignAthleteKpiModal';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
@@ -34,12 +35,21 @@ export default function Dashboard() {
   const [athletesLoading, setAthletesLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
 
+  const [kpis, setKpis] = useState([]);
+  const [kpisLoading, setKpisLoading] = useState(false);
+  const [kpisError, setKpisError] = useState('');
+  const [kpiStreamError, setKpiStreamError] = useState('');
+
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [addValueModalOpen, setAddValueModalOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [assignKpiModalOpen, setAssignKpiModalOpen] = useState(false);
+  const [editAthleteKpiModalOpen, setEditAthleteKpiModalOpen] = useState(false);
+  const [selectedAthleteKpi, setSelectedAthleteKpi] = useState(null);
 
   const loadMetrics = async (athleteId) => {
     if (!athleteId) {
@@ -57,6 +67,25 @@ export default function Dashboard() {
       setLoadError('Error loading metrics. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadKpis = async (athleteId) => {
+    if (!athleteId) {
+      setKpis([]);
+      return;
+    }
+
+    setKpisLoading(true);
+    setKpisError('');
+    try {
+      const response = await api.get(`/athletes/${athleteId}/kpis`);
+      setKpis(response.data || []);
+    } catch (error) {
+      console.error('Error loading KPIs:', error);
+      setKpisError('Error loading KPIs. Please try again.');
+    } finally {
+      setKpisLoading(false);
     }
   };
 
@@ -84,7 +113,33 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedAthlete) {
       loadMetrics(selectedAthlete);
+      loadKpis(selectedAthlete);
     }
+  }, [selectedAthlete]);
+
+  useEffect(() => {
+    if (!selectedAthlete) return;
+
+    setKpiStreamError('');
+    const source = new EventSource(`/api/athletes/${selectedAthlete}/kpis/stream`);
+
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setKpis(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error parsing KPI stream payload:', error);
+      }
+    };
+
+    source.onerror = (error) => {
+      console.error('KPI SSE stream error:', error);
+      setKpiStreamError('Real-time KPI updates are temporarily unavailable.');
+    };
+
+    return () => {
+      source.close();
+    };
   }, [selectedAthlete]);
 
   const handleAthleteChange = (event) => {
@@ -130,6 +185,16 @@ export default function Dashboard() {
 
   const handleValueSuccess = async () => {
     await loadMetrics(selectedAthlete);
+    await loadKpis(selectedAthlete);
+  };
+
+  const handleKpiSuccess = async () => {
+    await loadKpis(selectedAthlete);
+  };
+
+  const handleEditAthleteKpi = (kpiItem) => {
+    setSelectedAthleteKpi(kpiItem);
+    setEditAthleteKpiModalOpen(true);
   };
 
   const selectedAthleteName = useMemo(
@@ -234,6 +299,17 @@ export default function Dashboard() {
             <div className="dashboard-empty-text">
               There are no metrics available for the selected athlete.
             </div>
+
+            <button
+              type="button"
+              className="dashboard-success-btn"
+              onClick={handleAddValue}
+              disabled={!selectedAthlete}
+              style={{ marginTop: 16 }}
+            >
+              <AddIcon fontSize="small" />
+              Attach Metric to Athlete
+            </button>
           </div>
         </div>
       ) : (
@@ -253,7 +329,7 @@ export default function Dashboard() {
                 onClick={handleAddValue}
               >
                 <AddIcon fontSize="small" />
-                Add Value for Athlete
+                Attach Metric to Athlete
               </button>
             </div>
 
@@ -314,6 +390,119 @@ export default function Dashboard() {
                 );
               })}
             </div>
+          </div>
+
+          <div className="dashboard-section-card">
+            <div className="dashboard-section-header">
+              <div>
+                <div className="dashboard-section-title">KPIs</div>
+                <div className="dashboard-section-subtitle">
+                  Track athlete performance goals with real-time progress.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="dashboard-success-btn"
+                  onClick={() => setAssignKpiModalOpen(true)}
+                  disabled={!selectedAthlete}
+                >
+                  <AddIcon fontSize="small" />
+                  Assign KPI to Athlete
+                </button>
+              </div>
+            </div>
+
+            {kpisError && (
+              <div className="dashboard-message error" style={{ marginBottom: 16 }}>
+                {kpisError}
+              </div>
+            )}
+
+            {kpiStreamError && (
+              <div className="dashboard-message info" style={{ marginBottom: 16 }}>
+                {kpiStreamError}
+              </div>
+            )}
+
+            {kpisLoading ? (
+              <div className="dashboard-empty-state">
+                <div className="dashboard-empty-title">Loading KPIs</div>
+                <div className="dashboard-empty-text">
+                  Fetching KPI progress for {selectedAthleteName}.
+                </div>
+              </div>
+            ) : kpis.length === 0 ? (
+              <div className="dashboard-empty-state">
+                <div className="dashboard-empty-title">No KPIs configured</div>
+                <div className="dashboard-empty-text">
+                  Assign KPIs to this athlete to start tracking goal progress.
+                </div>
+              </div>
+            ) : (
+              <div className="dashboard-metrics-list">
+                {kpis.map((kpiItem) => {
+                  const currentValue = kpiItem.current_value ?? null;
+                  const targetValue = kpiItem.goal_value;
+                  const progressPercent = Number.isFinite(kpiItem.progress_percent)
+                    ? Math.max(0, Math.min(100, kpiItem.progress_percent))
+                    : 0;
+
+                  return (
+                    <div
+                      key={kpiItem.athlete_kpi_id}
+                      className="dashboard-metric-row"
+                      style={{ borderLeftColor: 'rgba(37, 99, 235, 0.9)' }}
+                    >
+                      <div className="dashboard-metric-main">
+                        <div className="dashboard-metric-title">{kpiItem.kpi_name}</div>
+                        {kpiItem.kpi_description && (
+                          <div className="dashboard-metric-description">{kpiItem.kpi_description}</div>
+                        )}
+                        <div className="dashboard-metric-description">
+                          <strong>Metric:</strong> {kpiItem.metric_name || `#${kpiItem.metric_id}`}
+                        </div>
+                        <div className="dashboard-metric-description">
+                          <strong>Goal:</strong> {kpiItem.goal_type_name || `Type #${kpiItem.id_goal_type}`} &nbsp;|&nbsp; <strong>Target:</strong> {targetValue}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="dashboard-metric-actions" style={{ justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            className="dashboard-icon-btn edit"
+                            onClick={() => handleEditAthleteKpi(kpiItem)}
+                            aria-label={`Edit KPI goal for ${kpiItem.kpi_name}`}
+                          >
+                            <EditIcon fontSize="small" />
+                          </button>
+                        </div>
+
+                        <div className="dashboard-metric-value" style={{ fontSize: 28 }}>
+                          {currentValue === null ? 'N/A' : Number(currentValue).toFixed(2)}
+                        </div>
+
+                        <div className="dashboard-metric-description">
+                          <strong>Status:</strong> {kpiItem.achieved ? 'Achieved' : 'Not achieved'}
+                        </div>
+
+                        <div className="dashboard-progress-track">
+                          <div
+                            className="dashboard-progress-fill"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <div className="dashboard-metric-description">
+                          <strong>Progress:</strong> {progressPercent.toFixed(0)}%
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="dashboard-section-card">
@@ -431,6 +620,7 @@ export default function Dashboard() {
         open={addValueModalOpen}
         onClose={() => setAddValueModalOpen(false)}
         athleteId={selectedAthlete}
+        athleteName={selectedAthleteName}
         onSuccess={handleValueSuccess}
       />
 
@@ -445,6 +635,25 @@ export default function Dashboard() {
         message="Are you sure you want to delete this metric?"
         itemName={selectedMetric?.name}
         loading={deleteLoading}
+      />
+
+      <AssignAthleteKpiModal
+        open={assignKpiModalOpen}
+        onClose={() => setAssignKpiModalOpen(false)}
+        onSuccess={handleKpiSuccess}
+        athleteId={selectedAthlete}
+      />
+
+      <AssignAthleteKpiModal
+        open={editAthleteKpiModalOpen}
+        onClose={() => {
+          setEditAthleteKpiModalOpen(false);
+          setSelectedAthleteKpi(null);
+        }}
+        onSuccess={handleKpiSuccess}
+        athleteId={selectedAthlete}
+        mode="edit"
+        athleteKpi={selectedAthleteKpi}
       />
     </div>
   );
