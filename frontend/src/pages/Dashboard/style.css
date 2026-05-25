@@ -281,6 +281,14 @@
   background: #b91c1c;
 }
 
+.dashboard-icon-btn.success {
+  background: #16a34a;
+}
+
+.dashboard-icon-btn.success:hover {
+  background: #15803d;
+}
+
 .dashboard-chart-card {
   padding: 18px;
   border-radius: 18px;

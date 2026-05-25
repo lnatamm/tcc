@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import './style.css';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -19,6 +19,8 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import api from '../../api';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import AddMetricModal from '../../components/AddMetricModal';
 import EditMetricModal from '../../components/EditMetricModal';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
@@ -26,6 +28,7 @@ import AddAthleteMetricValueModal from '../../components/AddAthleteMetricValueMo
 import AssignAthleteKpiModal from '../../components/AssignAthleteKpiModal';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
+
 
 export default function Dashboard() {
   const [athletes, setAthletes] = useState([]);
@@ -50,6 +53,63 @@ export default function Dashboard() {
   const [assignKpiModalOpen, setAssignKpiModalOpen] = useState(false);
   const [editAthleteKpiModalOpen, setEditAthleteKpiModalOpen] = useState(false);
   const [selectedAthleteKpi, setSelectedAthleteKpi] = useState(null);
+
+  // Inline edit state/hooks (must be inside component)
+  const [editingMetricId, setEditingMetricId] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [editingLoading, setEditingLoading] = useState(false);
+  const [editingError, setEditingError] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editingMetricId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingMetricId]);
+
+  const handleStartEdit = (metric) => {
+    setEditingMetricId(metric.id);
+    setEditingValue(metric.value !== null && metric.value !== undefined ? metric.value : '');
+    setEditingError('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMetricId(null);
+    setEditingValue('');
+    setEditingError('');
+  };
+
+  const handleEditValueChange = (e) => {
+    setEditingValue(e.target.value);
+    setEditingError('');
+  };
+
+  const handleSaveEdit = async (metric) => {
+    if (editingLoading) return;
+    let parsedValue = editingValue === '' ? null : parseFloat(editingValue);
+    if (editingValue !== '' && isNaN(parsedValue)) {
+      setEditingError('Enter a valid number or leave empty');
+      return;
+    }
+    setEditingLoading(true);
+    setEditingError('');
+    try {
+      await api.post('/athlete-metrics', {
+        id_metric: metric.id,
+        id_athlete: selectedAthlete,
+        value: parsedValue,
+        created_by: 'system',
+      });
+      setEditingMetricId(null);
+      setEditingValue('');
+      await loadMetrics(selectedAthlete);
+      await loadKpis(selectedAthlete);
+    } catch (error) {
+      setEditingError('Failed to save. Try again.');
+    } finally {
+      setEditingLoading(false);
+    }
+  };
 
   const loadMetrics = async (athleteId) => {
     if (!athleteId) {
@@ -336,7 +396,8 @@ export default function Dashboard() {
             <div className="dashboard-metrics-list">
               {metrics.map((metric, index) => {
                 const color = COLORS[index % COLORS.length];
-                const metricValue = metric.value !== null
+
+                let metricValue = metric.value !== null
                   ? (metric.aggregated ? Number(metric.value).toFixed(2) : metric.value)
                   : 'N/A';
 
@@ -363,9 +424,57 @@ export default function Dashboard() {
                     </div>
 
                     <div className="dashboard-metric-side">
-                      <div className="dashboard-metric-value" style={{ color: metric.aggregated ? color : '#111827' }}>
-                        {metricValue}
+
+                      <div className="dashboard-metric-value" style={{ color: metric.aggregated ? color : '#111827', minWidth: 80 }}>
+                        {(!metric.aggregated && editingMetricId === metric.id) ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input
+                              ref={inputRef}
+                              type="number"
+                              value={editingValue}
+                              onChange={handleEditValueChange}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(metric);
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                              style={{ width: 70, fontSize: 16, padding: '2px 6px' }}
+                              disabled={editingLoading}
+                            />
+                            <button
+                              type="button"
+                              className="dashboard-icon-btn success"
+                              onClick={() => handleSaveEdit(metric)}
+                              disabled={editingLoading}
+                              aria-label="Save"
+                            >
+                              <CheckIcon fontSize="small" />
+                            </button>
+                            <button
+                              type="button"
+                              className="dashboard-icon-btn delete"
+                              onClick={handleCancelEdit}
+                              disabled={editingLoading}
+                              aria-label="Cancel"
+                            >
+                              <CloseIcon fontSize="small" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            style={{ cursor: metric.aggregated ? 'default' : 'pointer', display: 'inline-block' }}
+                            onClick={() => {
+                              if (!metric.aggregated) handleStartEdit(metric);
+                            }}
+                            tabIndex={metric.aggregated ? -1 : 0}
+                            aria-label={metric.aggregated ? undefined : 'Edit value'}
+                          >
+                            {metricValue}
+                          </span>
+                        )}
                       </div>
+                      {editingMetricId === metric.id && editingError && (
+                        <div style={{ color: '#dc2626', fontSize: 12, marginTop: 2 }}>{editingError}</div>
+                      )}
 
                       <div className="dashboard-metric-actions">
                         <button
