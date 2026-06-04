@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
@@ -56,6 +57,14 @@ const Navbar = () => {
             >
               <TodayIcon sx={{ fontSize: 20 }} />
               <span>Routines & Exercises</span>
+            </Link>
+
+            <Link
+              to="/exercises"
+              className={`sidebar-link ${location.pathname === '/exercises' ? 'active' : ''}`}
+            >
+              <FitnessCenterIcon sx={{ fontSize: 20 }} />
+              <span>Exercises</span>
             </Link>
 
             <Link

@@ -8,6 +8,7 @@ import AthleteControl from './pages/AthleteControl';
 import AthleteDetails from './pages/AthleteDetails';
 import TodayRoutines from './pages/TodayRoutines';
 import RoutinesPage from './pages/RoutinesPage';
+import ExercisesPage from './pages/ExercisesPage';
 import PhysicalTestsPage from './pages/PhysicalTestsPage';
 import EventsPage from './pages/EventsPage';
 import Dashboard from './pages/Dashboard';
@@ -55,6 +56,14 @@ const App = () => {
                 element={
                   <PrivateRoute allowUserTypes={['coach']}>
                     <RoutinesPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/exercises"
+                element={
+                  <PrivateRoute allowUserTypes={['coach']}>
+                    <ExercisesPage />
                   </PrivateRoute>
                 }
               />

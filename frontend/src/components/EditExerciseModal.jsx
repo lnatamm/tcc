@@ -1,59 +1,79 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  MenuItem,
-  CircularProgress,
   Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  TextField,
 } from '@mui/material';
-import { useSports, useTypeExercises, useCreateExercise } from '../hooks/useApi';
+import { useSports, useTypeExercises, useUpdateExercise } from '../hooks/useApi';
 import { exerciseService } from '../services/apiService';
 import VideoFileInput from './VideoFileInput';
 
-const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    reps: '',
-    sets: '',
-    id_sport: '',
-    id_type: '',
-  });
+const buildFormData = (exercise) => ({
+  name: exercise?.name || '',
+  description: exercise?.description || '',
+  reps: exercise?.reps ?? '',
+  sets: exercise?.sets ?? '',
+  id_sport: exercise?.id_sport ? String(exercise.id_sport) : '',
+  id_type: exercise?.id_type ? String(exercise.id_type) : '',
+});
+
+const EditExerciseModal = ({ open, onClose, exercise, onSuccess }) => {
+  const [formData, setFormData] = useState(buildFormData(exercise));
   const [errors, setErrors] = useState({});
   const [videoFile, setVideoFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const { data: sports = [], isLoading: loadingSports } = useSports();
   const { data: typeExercises = [], isLoading: loadingTypes } = useTypeExercises();
-  const createExercise = useCreateExercise();
+  const updateExercise = useUpdateExercise();
+
+  useEffect(() => {
+    if (open) {
+      setFormData(buildFormData(exercise));
+      setErrors({});
+      setVideoFile(null);
+    }
+  }, [exercise, open]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
+      setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
   const validate = () => {
-    const newErrors = {};
+    const nextErrors = {};
+
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      nextErrors.name = 'Name is required';
     }
     if (!formData.id_sport) {
-      newErrors.id_sport = 'Sport is required';
+      nextErrors.id_sport = 'Sport is required';
     }
     if (!formData.id_type) {
-      newErrors.id_type = 'Exercise type is required';
+      nextErrors.id_type = 'Exercise type is required';
     }
-    return newErrors;
+
+    return nextErrors;
+  };
+
+  const handleCancel = () => {
+    setFormData(buildFormData(exercise));
+    setErrors({});
+    setVideoFile(null);
+    onClose();
   };
 
   const handleSubmit = async () => {
+    if (!exercise?.id) return;
+
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -62,6 +82,7 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
 
     try {
       setSubmitting(true);
+
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim() || null,
@@ -69,75 +90,39 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
         sets: formData.sets ? parseInt(formData.sets, 10) : null,
         id_sport: parseInt(formData.id_sport, 10),
         id_type: parseInt(formData.id_type, 10),
-        photo_path: null,
-        video_path: null,
-        created_by: 'system',
+        photo_path: exercise.photo_path || null,
+        video_path: exercise.video_path || null,
       };
 
-      const created = await createExercise.mutateAsync(payload);
-
-      let result = created;
-      if (videoFile && created?.id) {
-        try {
-          result = await exerciseService.uploadVideo(created.id, videoFile);
-        } catch (uploadErr) {
-          // Best-effort rollback to avoid creating an exercise without the intended video
-          try {
-            await exerciseService.delete(created.id);
-          } catch {
-            // ignore rollback errors
-          }
-          throw uploadErr;
-        }
-      }
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        reps: '',
-        sets: '',
-        id_sport: '',
-        id_type: '',
+      const updated = await updateExercise.mutateAsync({
+        id: exercise.id,
+        data: payload,
       });
-      setErrors({});
-      setVideoFile(null);
-      
+
+      let result = updated;
+      if (videoFile) {
+        result = await exerciseService.uploadVideo(exercise.id, videoFile);
+      }
+
       if (onSuccess) {
         onSuccess(result);
       }
-      onClose();
+      handleCancel();
     } catch (err) {
-      console.error('Failed to create exercise:', err);
-      setErrors({ submit: 'Failed to create exercise. Please try again.' });
+      console.error('Failed to update exercise:', err);
+      setErrors({ submit: 'Failed to update exercise. Please try again.' });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      name: '',
-      description: '',
-      reps: '',
-      sets: '',
-      id_sport: '',
-      id_type: '',
-    });
-    setErrors({});
-    setVideoFile(null);
-    onClose();
-  };
-
   return (
     <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
-      <DialogTitle>Create New Exercise</DialogTitle>
-      
+      <DialogTitle>Edit Exercise</DialogTitle>
+
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          {errors.submit && (
-            <Alert severity="error">{errors.submit}</Alert>
-          )}
+          {errors.submit && <Alert severity="error">{errors.submit}</Alert>}
 
           <TextField
             label="Exercise Name"
@@ -225,21 +210,21 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
           <VideoFileInput value={videoFile} onChange={setVideoFile} maxBytes={200 * 1024 * 1024} />
         </Box>
       </DialogContent>
-      
+
       <DialogActions>
-        <Button onClick={handleCancel} disabled={createExercise.isPending || submitting}>
+        <Button onClick={handleCancel} disabled={updateExercise.isPending || submitting}>
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={createExercise.isPending || submitting || loadingSports || loadingTypes}
+          disabled={updateExercise.isPending || submitting || loadingSports || loadingTypes}
         >
-          {(createExercise.isPending || submitting) ? 'Creating...' : 'Create'}
+          {(updateExercise.isPending || submitting) ? 'Saving...' : 'Save changes'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default CreateExerciseModal;
+export default EditExerciseModal;
