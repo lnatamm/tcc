@@ -84,7 +84,7 @@ const CreateExerciseModal = ({ open, onClose, onSuccess }) => {
           // Best-effort rollback to avoid creating an exercise without the intended video
           try {
             await exerciseService.delete(created.id);
-          } catch (_) {
+          } catch {
             // ignore rollback errors
           }
           throw uploadErr;
