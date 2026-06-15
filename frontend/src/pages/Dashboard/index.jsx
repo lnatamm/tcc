@@ -223,13 +223,13 @@ export default function Dashboard() {
   const confirmDelete = async () => {
     setDeleteLoading(true);
     try {
-      await api.delete(`/metrics/${selectedMetric.id}`);
+      await api.delete(`/athlete-metrics/${selectedAthlete}/${selectedMetric.id}`);
       setDeleteModalOpen(false);
       setSelectedMetric(null);
       await loadMetrics(selectedAthlete);
     } catch (error) {
-      console.error('Error deleting metric:', error);
-      alert('Error deleting metric. Please try again.');
+      console.error('Error detaching metric from athlete:', error);
+      alert('Error detaching metric from athlete. Please try again.');
     } finally {
       setDeleteLoading(false);
     }
@@ -740,8 +740,8 @@ export default function Dashboard() {
           setSelectedMetric(null);
         }}
         onConfirm={confirmDelete}
-        title="Delete Metric"
-        message="Are you sure you want to delete this metric?"
+        title="Detach Metric"
+        message="Are you sure you want to detach this metric from the athlete?"
         itemName={selectedMetric?.name}
         loading={deleteLoading}
       />

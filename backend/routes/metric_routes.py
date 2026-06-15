@@ -84,3 +84,16 @@ def update_athlete_metric(athlete_metric_id: int, payload: AthleteMetricUpdate):
         return metric_controller.update_athlete_metric(athlete_metric_id, payload)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/athlete-metrics/{athlete_id}/{metric_id}")
+def delete_athlete_metric(athlete_id: int, metric_id: int):
+    """Detach a metric from an athlete"""
+    try:
+        result = metric_controller.delete_athlete_metric(athlete_id, metric_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Athlete metric not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

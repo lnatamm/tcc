@@ -37,9 +37,17 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import TimerIcon from '@mui/icons-material/Timer';
 import NotesIcon from '@mui/icons-material/Notes';
 import CategoryIcon from '@mui/icons-material/Category';
-import { useRoutinesByAthlete, useRoutineExercises, useCreateRoutine } from '../hooks/useApi';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import {
+  useRoutinesByAthlete,
+  useRoutineExercises,
+  useCreateRoutine,
+  useRemoveExerciseFromRoutine,
+  useDeleteRoutine,
+} from '../hooks/useApi';
 import AddExerciseToRoutineModal from './AddExerciseToRoutineModal';
 import ExerciseVideoPlayer from './ExerciseVideoPlayer';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 const DAYS_OF_WEEK = [
   { key: 'MONDAY', label: 'Monday', short: 'MON', index: 1 },
@@ -87,7 +95,7 @@ const isToday = (date) => {
          date.getFullYear() === today.getFullYear();
 };
 
-const ExerciseDetailsModal = ({ open, onClose, exercise, routineExercise }) => {
+const ExerciseDetailsModal = ({ open, onClose, onDelete, exercise, routineExercise }) => {
   if (!exercise) return null;
 
   const startTime = routineExercise?.start_hour || '';
@@ -357,6 +365,9 @@ const ExerciseDetailsModal = ({ open, onClose, exercise, routineExercise }) => {
         <Button onClick={onClose} variant="contained">
           Close
         </Button>
+        <Button onClick={onDelete} variant="outlined" color="error">
+          Remove from routine
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -491,7 +502,7 @@ const ExerciseCard = ({ exercise, routineExercise, onClick }) => {
   );
 };
 
-const WeekCalendarView = ({ routineId, routineName, userName }) => {
+const WeekCalendarView = ({ routineId, routineName, userName, onDeleteRoutine }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState(() => {
     const today = new Date().getDay();
@@ -502,9 +513,12 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [selectedRoutineExercise, setSelectedRoutineExercise] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
   
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
   const { data: exercises = [], isLoading, error } = useRoutineExercises(routineId);
+  const removeExerciseFromRoutine = useRemoveExerciseFromRoutine();
 
   const handleExerciseClick = (exercise, routineExercise) => {
     setSelectedExercise(exercise);
@@ -516,6 +530,32 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
     setDetailsModalOpen(false);
     setSelectedExercise(null);
     setSelectedRoutineExercise(null);
+  };
+
+  const handleRequestDeleteExercise = () => {
+    setDeleteErrorMessage('');
+    setDeleteConfirmationOpen(true);
+  };
+
+  const handleCancelDeleteExercise = () => {
+    setDeleteConfirmationOpen(false);
+    setDeleteErrorMessage('');
+  };
+
+  const handleConfirmDeleteExercise = async () => {
+    if (!selectedRoutineExercise?.id) {
+      return;
+    }
+
+    try {
+      setDeleteErrorMessage('');
+      await removeExerciseFromRoutine.mutateAsync(selectedRoutineExercise.id);
+      setDeleteConfirmationOpen(false);
+      handleCloseDetailsModal();
+    } catch (err) {
+      console.error('Failed to remove exercise from routine:', err);
+      setDeleteErrorMessage('Failed to remove the exercise from the routine. Please try again.');
+    }
   };
 
   const exercisesByDay = useMemo(() => {
@@ -637,6 +677,7 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
           >
             Add Exercise
           </Button>
+          
         </Box>
         
         <Tabs
@@ -780,8 +821,20 @@ const WeekCalendarView = ({ routineId, routineName, userName }) => {
       <ExerciseDetailsModal
         open={detailsModalOpen}
         onClose={handleCloseDetailsModal}
+        onDelete={handleRequestDeleteExercise}
         exercise={selectedExercise}
         routineExercise={selectedRoutineExercise}
+      />
+
+      <DeleteConfirmationModal
+        open={deleteConfirmationOpen}
+        onClose={handleCancelDeleteExercise}
+        onConfirm={handleConfirmDeleteExercise}
+        title="Remove exercise from routine"
+        message="This will remove the exercise from the selected routine."
+        itemName={selectedExercise?.name || ''}
+        loading={removeExerciseFromRoutine.isPending}
+        errorMessage={deleteErrorMessage}
       />
     </>
   );
@@ -792,9 +845,13 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
   const [newRoutineName, setNewRoutineName] = useState('');
   const [createError, setCreateError] = useState(null);
   const [selectedRoutineTab, setSelectedRoutineTab] = useState(0);
+  const [deleteRoutineConfirmationOpen, setDeleteRoutineConfirmationOpen] = useState(false);
+  const [routineToDelete, setRoutineToDelete] = useState(null);
+  const [deleteRoutineErrorMessage, setDeleteRoutineErrorMessage] = useState('');
   
   const { data: routines = [], isLoading, error } = useRoutinesByAthlete(athlete?.id);
   const createRoutine = useCreateRoutine();
+  const deleteRoutine = useDeleteRoutine();
 
   const handleCreateRoutine = async () => {
     if (!newRoutineName.trim()) {
@@ -822,6 +879,35 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
     setNewRoutineName('');
     setCreateError(null);
     setShowCreateForm(false);
+  };
+
+  const handleRequestDeleteRoutine = (routine) => {
+    setRoutineToDelete(routine);
+    setDeleteRoutineErrorMessage('');
+    setDeleteRoutineConfirmationOpen(true);
+  };
+
+  const handleCancelDeleteRoutine = () => {
+    setDeleteRoutineConfirmationOpen(false);
+    setRoutineToDelete(null);
+    setDeleteRoutineErrorMessage('');
+  };
+
+  const handleConfirmDeleteRoutine = async () => {
+    if (!routineToDelete?.id) {
+      return;
+    }
+
+    try {
+      setDeleteRoutineErrorMessage('');
+      await deleteRoutine.mutateAsync(routineToDelete.id);
+      setDeleteRoutineConfirmationOpen(false);
+      setRoutineToDelete(null);
+      setSelectedRoutineTab((prev) => Math.max(0, Math.min(prev, routines.length - 2)));
+    } catch (err) {
+      console.error('Failed to remove routine:', err);
+      setDeleteRoutineErrorMessage('Failed to remove the routine. Please try again.');
+    }
   };
 
   return (
@@ -963,7 +1049,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
                   },
                 }}
               >
-                {routines.map((routine, index) => (
+                {routines.map((routine) => (
                   <Tab 
                     key={routine.id} 
                     label={routine.name}
@@ -983,6 +1069,7 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
                     routineId={routine.id} 
                     routineName={routine.name} 
                     userName={userName}
+                        onDeleteRoutine={() => handleRequestDeleteRoutine(routine)}
                   />
                 )}
               </Box>
@@ -994,6 +1081,17 @@ const AthleteRoutinesModal = ({ open, onClose, athlete, userName = 'system' }) =
       <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 2 }}>
         <Button onClick={onClose} variant="outlined">Close</Button>
       </DialogActions>
+
+      <DeleteConfirmationModal
+        open={deleteRoutineConfirmationOpen}
+        onClose={handleCancelDeleteRoutine}
+        onConfirm={handleConfirmDeleteRoutine}
+        title="Remove routine"
+        message="This will remove the selected routine from the athlete."
+        itemName={routineToDelete?.name || ''}
+        loading={deleteRoutine.isPending}
+        errorMessage={deleteRoutineErrorMessage}
+      />
     </Dialog>
   );
 };

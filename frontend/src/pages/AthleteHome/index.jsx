@@ -2,12 +2,20 @@ import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   Chip,
   CircularProgress,
   Container,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
+  List,
+  ListItem,
+  ListItemText,
   Paper,
   Tab,
   Tabs,
@@ -80,9 +88,22 @@ const formatWeekRange = (weekDates) => {
   return `${startStr} - ${endStr}`;
 };
 
+const formatEventDate = (dateIso) => {
+  if (!dateIso) return 'No date';
+  const date = new Date(dateIso);
+  if (Number.isNaN(date.getTime())) return 'No date';
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
 const AthleteHome = () => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [filterTab, setFilterTab] = useState('all');
+  const [selectedEventDate, setSelectedEventDate] = useState(null);
 
   const { data: myAthlete, isLoading: loadingMyAthlete, error: myAthleteError } = useMyAthlete();
   const athleteId = myAthlete?.id;
@@ -112,7 +133,7 @@ const AthleteHome = () => {
     return set;
   }, [routineExercises]);
 
-  const eventDaysSet = useMemo(() => {
+  const eventDaysMap = useMemo(() => {
     const teamIdSet = new Set(
       (athleteTeams || [])
         .map((row) => row?.team?.id ?? row?.id)
@@ -122,7 +143,7 @@ const AthleteHome = () => {
 
     const weekStart = weekDates[0];
     const weekEnd = weekDates[6];
-    const ymdSet = new Set();
+    const ymdMap = new Map();
 
     (events || []).forEach((evt) => {
       const evtTeamIds = (evt?.teams || []).map((t) => Number(t?.id)).filter(Boolean);
@@ -137,26 +158,50 @@ const AthleteHome = () => {
       day.setHours(0, 0, 0, 0);
 
       if (day >= weekStart && day <= weekEnd) {
-        ymdSet.add(localYmd(day));
+        const key = localYmd(day);
+        const list = ymdMap.get(key) || [];
+        list.push(evt);
+        ymdMap.set(key, list);
       }
     });
 
-    return ymdSet;
+    ymdMap.forEach((list, key) => {
+      const sorted = [...list].sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')));
+      ymdMap.set(key, sorted);
+    });
+
+    return ymdMap;
   }, [athleteTeams, events, weekDates]);
 
   const calendarDays = useMemo(() => {
     return weekDates.map((date) => {
       const dayKey = dayKeyFromDate(date);
+      const eventKey = localYmd(date);
+      const eventsForDay = eventDaysMap.get(eventKey) || [];
       const hasWorkout = workoutDaysSet.has(dayKey);
-      const hasEvent = eventDaysSet.has(localYmd(date));
+      const hasEvent = eventsForDay.length > 0;
       return {
         date,
         dayKey,
         hasWorkout,
         hasEvent,
+        eventsForDay,
       };
     });
-  }, [eventDaysSet, weekDates, workoutDaysSet]);
+  }, [eventDaysMap, weekDates, workoutDaysSet]);
+
+  const selectedDayEvents = useMemo(() => {
+    if (!selectedEventDate) return [];
+    return eventDaysMap.get(selectedEventDate) || [];
+  }, [eventDaysMap, selectedEventDate]);
+
+  const selectedEventDayLabel = useMemo(() => {
+    if (!selectedEventDate) return '';
+    const currentDay = calendarDays.find((day) => localYmd(day.date) === selectedEventDate);
+    if (!currentDay) return '';
+    const dayLabel = DAYS_OF_WEEK.find((x) => x.key === currentDay.dayKey)?.label || currentDay.dayKey;
+    return `${dayLabel} ${currentDay.date.getDate()}`;
+  }, [calendarDays, selectedEventDate]);
 
   const counts = useMemo(() => {
     const all = todayExercises.length;
@@ -190,6 +235,14 @@ const AthleteHome = () => {
       day: 'numeric',
     });
   }, []);
+
+  const handleOpenEventDetails = (date) => {
+    setSelectedEventDate(date);
+  };
+
+  const handleCloseEventDetails = () => {
+    setSelectedEventDate(null);
+  };
 
   if (loadingMyAthlete) {
     return (
@@ -300,7 +353,13 @@ const AthleteHome = () => {
                       <Chip size="small" icon={<FitnessCenterIcon />} label="Workout" />
                     )}
                     {d.hasEvent && (
-                      <Chip size="small" icon={<CalendarTodayIcon />} label="Event" />
+                      <Chip
+                        size="small"
+                        icon={<CalendarTodayIcon />}
+                        label={d.eventsForDay.length > 1 ? `Events (${d.eventsForDay.length})` : 'Event'}
+                        onClick={() => handleOpenEventDetails(localYmd(d.date))}
+                        clickable
+                      />
                     )}
                     {!d.hasWorkout && !d.hasEvent && (
                       <Chip size="small" variant="outlined" label="—" />
@@ -312,6 +371,51 @@ const AthleteHome = () => {
           })}
         </Grid>
       </Paper>
+
+      <Dialog open={Boolean(selectedEventDate)} onClose={handleCloseEventDetails} maxWidth="sm" fullWidth>
+        <DialogTitle>{selectedEventDayLabel ? `Events on ${selectedEventDayLabel}` : 'Event details'}</DialogTitle>
+        <DialogContent dividers>
+          {selectedDayEvents.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No event details available for this day.
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {selectedDayEvents.map((event, index) => {
+                const teamNames = (event?.teams || []).map((team) => team?.name).filter(Boolean);
+                const secondaryParts = [
+                  formatEventDate(event?.start_date),
+                  teamNames.length ? teamNames.join(', ') : null,
+                ].filter(Boolean);
+
+                return (
+                  <React.Fragment key={event?.id ?? `${selectedEventDate}-${index}`}>
+                    {index > 0 && <Divider sx={{ my: 1.5 }} />}
+                    <ListItem disableGutters alignItems="flex-start">
+                      <ListItemText
+                        primary={event?.name || 'Event'}
+                        secondary={
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              {secondaryParts.join(' • ')}
+                            </Typography>
+                            <Typography variant="body2">
+                              {event?.description || 'No description provided.'}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  </React.Fragment>
+                );
+              })}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEventDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <Divider sx={{ mb: 3 }} />
 

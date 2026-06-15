@@ -42,6 +42,16 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
 
   const [errors, setErrors] = useState({});
 
+  const getInitialSelectionCount = (formula) => {
+    if (!formula) return 0;
+    return Number(formula.id) === 1 ? 2 : 2;
+  };
+
+  const canAddMoreMetrics = (formula) => {
+    if (!formula) return false;
+    return Number(formula.id) !== 1;
+  };
+
   useEffect(() => {
     if (open && metric) {
       // Fill form with metric data
@@ -49,7 +59,7 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
       setFormData({
         name: metric.name || '',
         description: metric.description || '',
-        id_formula: metric.id_formula || '',
+        id_formula: metric.id_formula ? String(metric.id_formula) : '',
         id_coach: metric.id_coach || '',
         id_sport: metric.id_sport || '',
         ids_metrics: idsMetricsArray,
@@ -96,9 +106,8 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
     // If formula changes, reset selected metrics
     if (field === 'id_formula') {
       setFormData(prev => ({ ...prev, ids_metrics: [] }));
-      const selectedFormula = formulas.find(f => f.id === value);
-      const maxArgs = selectedFormula?.max_arguments || 0;
-      setMetricSelections(Array(maxArgs).fill(''));
+      const selectedFormula = formulas.find(f => Number(f.id) === Number(value));
+      setMetricSelections(Array(getInitialSelectionCount(selectedFormula)).fill(''));
     }
 
     // If aggregated is unchecked, clear formula and metrics
@@ -128,13 +137,13 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
     }
 
     if (formData.aggregated && formData.id_formula) {
-      const selectedFormula = formulas.find(f => f.id === formData.id_formula);
+      const selectedFormula = formulas.find(f => Number(f.id) === Number(formData.id_formula));
       if (selectedFormula) {
         const filledMetrics = metricSelections.filter(m => m !== '');
-        if (filledMetrics.length === 0) {
-          newErrors.ids_metrics = 'Select at least one metric';
-        } else if (selectedFormula.max_arguments && filledMetrics.length < selectedFormula.max_arguments) {
-          newErrors.ids_metrics = `This formula requires exactly ${selectedFormula.max_arguments} metrics`;
+        if (Number(selectedFormula.id) === 1 && filledMetrics.length !== 2) {
+          newErrors.ids_metrics = 'Division requires exactly 2 metrics';
+        } else if (filledMetrics.length < 2) {
+          newErrors.ids_metrics = 'Select at least two metrics';
         }
       }
     }
@@ -155,7 +164,7 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
       const metricPayload = {
         name: formData.name,
         description: formData.description || null,
-        id_formula: formData.aggregated && formData.id_formula ? formData.id_formula : null,
+        id_formula: formData.aggregated && formData.id_formula ? Number(formData.id_formula) : null,
         id_coach: formData.id_coach,
         id_sport: formData.id_sport,
         ids_metrics: formData.aggregated && filledMetrics.length > 0 
@@ -201,6 +210,15 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
     if (errors.ids_metrics) {
       setErrors(prev => ({ ...prev, ids_metrics: '' }));
     }
+  };
+
+  const handleAddMetricSelection = () => {
+    const selectedFormula = formulas.find(f => Number(f.id) === Number(formData.id_formula));
+    if (!canAddMoreMetrics(selectedFormula)) {
+      return;
+    }
+
+    setMetricSelections(prev => [...prev, '']);
   };
 
   const selectedFormula = formulas.find(f => f.id === formData.id_formula);
@@ -297,11 +315,6 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
                   <Typography variant="body2">
                     {selectedFormula.description}
                   </Typography>
-                  {selectedFormula.max_arguments && (
-                    <Typography variant="caption">
-                      Maximum arguments: {selectedFormula.max_arguments}
-                    </Typography>
-                  )}
                 </Alert>
               )}
 
@@ -344,6 +357,16 @@ export default function EditMetricModal({ open, onClose, onSuccess, metric }) {
                       </Select>
                     </FormControl>
                   ))}
+                  {canAddMoreMetrics(selectedFormula) && (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={handleAddMetricSelection}
+                      sx={{ mb: 2 }}
+                    >
+                      Add another metric
+                    </Button>
+                  )}
                   {errors.ids_metrics && (
                     <Alert severity="error" sx={{ mt: 1 }}>
                       {errors.ids_metrics}

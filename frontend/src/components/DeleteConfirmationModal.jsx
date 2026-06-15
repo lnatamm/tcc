@@ -18,7 +18,8 @@ export default function DeleteConfirmationModal({
   title = "Confirm Deletion",
   message = "Are you sure you want to delete this item?",
   itemName = "",
-  loading = false
+  loading = false,
+  errorMessage = "",
 }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -35,6 +36,11 @@ export default function DeleteConfirmationModal({
         <Typography variant="body1">
           {message}
         </Typography>
+        {errorMessage && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {errorMessage}
+          </Alert>
+        )}
         {itemName && (
           <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary">

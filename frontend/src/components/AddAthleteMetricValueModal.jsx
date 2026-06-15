@@ -34,10 +34,7 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
   const fetchBaseMetrics = async () => {
     try {
       const response = await api.get('/metrics');
-      // Only simple metrics can be attached/set directly.
-      // Aggregated metrics appear automatically when their components have values.
-      const simpleMetrics = (response.data || []).filter((metric) => !metric.aggregated);
-      setBaseMetrics(simpleMetrics);
+      setBaseMetrics(response.data || []);
     } catch (error) {
       console.error('Error loading metrics:', error);
     }
@@ -161,7 +158,13 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
             </Alert>
           )}
 
-          {selectedMetricData && (
+          {selectedMetricData?.aggregated && (
+            <Alert severity="info">
+              Aggregated metrics are attached here first and then calculated from their component metrics.
+            </Alert>
+          )}
+
+          {selectedMetricData && !selectedMetricData.aggregated && (
             <TextField
               label="Initial Value (optional)"
               fullWidth
@@ -174,7 +177,7 @@ export default function AddAthleteMetricValueModal({ open, onClose, onSuccess, a
             />
           )}
 
-          {selectedMetricData && (
+          {selectedMetricData && !selectedMetricData.aggregated && (
             <Alert severity="info">
               <Typography variant="body2">
                 If you provide a value, it will <strong>overwrite</strong> the athlete's current value for this metric.

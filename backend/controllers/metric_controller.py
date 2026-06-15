@@ -124,7 +124,7 @@ class MetricController:
 
         Semantics:
         - Base (non-aggregated) metrics are a single current value per (athlete, metric).
-        - Aggregated metrics are computed automatically when all component metrics exist.
+        - Aggregated metrics are computed only after the athlete has attached the metric.
         """
 
         # 1) Load athlete metric rows (current value per metric).
@@ -173,45 +173,8 @@ class MetricController:
 
             metrics_by_id[metric_id] = metric_obj
 
-        # 3) Load all aggregated metric definitions and compute those that can be derived.
-        aggregated_defs: List[Dict[str, Any]] = []
-        cache_ttl_seconds = 30.0
-        now_ts = time.time()
-        if self._aggregated_defs_cache is not None and (now_ts - self._aggregated_defs_cache_at) < cache_ttl_seconds:
-            aggregated_defs = self._aggregated_defs_cache
-        else:
-            aggregated_defs_response = self._execute_with_retry(
-                self.supabase_integration.client.table('metric')
-                .select('*')
-                .eq('aggregated', True)
-                .is_('deleted_at', 'null'),
-                retries=1,
-            )
-            aggregated_defs = aggregated_defs_response.data or []
-            self._aggregated_defs_cache = aggregated_defs
-            self._aggregated_defs_cache_at = now_ts
-
-        # Add aggregated definitions as compute candidates.
-        for metric_def in aggregated_defs:
-            metric_id = int(metric_def.get('id'))
-            if metric_id in metrics_by_id:
-                # Keep existing (athlete assigned) object; value will be computed below.
-                continue
-            metrics_by_id[metric_id] = {
-                'id': metric_id,
-                'id_formula': metric_def.get('id_formula'),
-                'id_coach': metric_def.get('id_coach'),
-                'id_sport': metric_def.get('id_sport'),
-                'ids_metrics': metric_def.get('ids_metrics'),
-                'name': metric_def.get('name'),
-                'description': metric_def.get('description'),
-                'aggregated': True,
-                'value': None,
-                'created_at': metric_def.get('created_at'),
-            }
-
         # Iteratively compute aggregated metrics (supports chains).
-        max_iterations = max(1, len(aggregated_defs) + 1)
+        max_iterations = max(1, len(metrics_by_id) + 1)
         for _ in range(max_iterations):
             changed = False
 
@@ -257,19 +220,11 @@ class MetricController:
             if not changed:
                 break
 
-        # 4) Return base metrics plus computed aggregated metrics (only if computable).
+        # 3) Return only metrics attached to the athlete.
         result: List[Dict[str, Any]] = []
         base_metric_ids = set(latest_row_by_metric_id.keys())
 
         for metric_id in sorted(base_metric_ids):
-            result.append(metrics_by_id[metric_id])
-
-        computed_aggregated_ids = sorted(
-            mid
-            for mid, metric in metrics_by_id.items()
-            if mid not in base_metric_ids and metric.get('aggregated') and metric.get('value') is not None
-        )
-        for metric_id in computed_aggregated_ids:
             result.append(metrics_by_id[metric_id])
 
         return result
@@ -285,6 +240,14 @@ class MetricController:
     def create_athlete_metric(self, payload: AthleteMetricCreate):
         """Creates or updates an athlete metric (single current value per athlete+metric)."""
         data = payload.model_dump()
+
+        metric_response = self.supabase_integration.client.table('metric').select('*').eq('id', data['id_metric']).is_('deleted_at', 'null').execute()
+        metric_rows: List[Dict[str, Any]] = metric_response.data or []
+        metric_def = metric_rows[0] if metric_rows else {}
+        is_aggregated_metric = bool(metric_def.get('aggregated'))
+
+        if is_aggregated_metric:
+            data['value'] = None
 
         # TODO: Remove this conversion when database column type is changed from BIGINT to FLOAT/NUMERIC
         if data.get('value') is not None:
@@ -309,7 +272,7 @@ class MetricController:
         now = datetime.now().isoformat()
         if existing_row is not None:
             update_data: Dict[str, Any] = {
-                'value': data.get('value'),
+                'value': None if is_aggregated_metric else data.get('value'),
                 'updated_at': now,
                 'updated_by': data.get('created_by') or 'system',
             }
@@ -327,3 +290,25 @@ class MetricController:
         if data.get('value') is not None:
             data['value'] = int(data['value'])
         return self.supabase_integration.update('athlete_has_metric', athlete_metric_id, data)
+
+    def delete_athlete_metric(self, athlete_id: int, metric_id: int):
+        """Detaches a metric from an athlete by soft deleting the athlete-metric row."""
+        existing_response = (
+            self.supabase_integration.client.table('athlete_has_metric')
+            .select('*')
+            .eq('id_athlete', athlete_id)
+            .eq('id_metric', metric_id)
+            .is_('deleted_at', 'null')
+            .execute()
+        )
+        existing_rows: List[Dict[str, Any]] = existing_response.data or []
+
+        if not existing_rows:
+            return None
+
+        existing_row = None
+        for row in existing_rows:
+            if existing_row is None or self._row_recency_key(row) > self._row_recency_key(existing_row):
+                existing_row = row
+
+        return self.supabase_integration.delete('athlete_has_metric', int(existing_row['id']))
